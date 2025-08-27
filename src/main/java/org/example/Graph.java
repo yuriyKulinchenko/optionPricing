@@ -3,6 +3,8 @@ package org.example;
 import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +19,7 @@ public class Graph {
     private Graph() {
         chart = new XYChartBuilder()
                 .width(800).height(600)
-                .title("Test graph")
+                .title("Asset price")
                 .xAxisTitle("X axis")
                 .yAxisTitle("Y axis")
                 .build();
@@ -32,7 +34,17 @@ public class Graph {
 
     public void addSeries(String name, List<Double> xList, List<Double> yList) {
         plotCount++;
-        chart.addSeries(name, xList, yList);
+        XYSeries series = chart.addSeries(name, xList, yList);
+        series.setMarker(SeriesMarkers.NONE);
+        series.setSmooth(true);
+    }
+
+    public void addSeries(String name, List<Double> yList) {
+        List<Double> xList = new ArrayList<>();
+        for (int i = 0; i < yList.size(); i++) {
+            xList.add((double)i);
+        }
+        addSeries(name, xList, yList);
     }
 
     public void draw() {

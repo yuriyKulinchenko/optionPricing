@@ -17,7 +17,7 @@ public class RandomGenerator {
         return singleton;
     }
 
-    double nextGaussian() {
+    public double nextGaussian() {
         return random.nextGaussian();
     }
 }
