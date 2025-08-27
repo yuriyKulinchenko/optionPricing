@@ -36,15 +36,19 @@ public class Graph {
         plotCount++;
         XYSeries series = chart.addSeries(name, xList, yList);
         series.setMarker(SeriesMarkers.NONE);
-        series.setSmooth(true);
+        // series.setSmooth(true);
     }
 
-    public void addSeries(String name, List<Double> yList) {
+    public void addSeries(String name, List<Double> yList, double xMin, double dx) {
         List<Double> xList = new ArrayList<>();
         for (int i = 0; i < yList.size(); i++) {
-            xList.add((double)i);
+            xList.add(xMin + i * dx);
         }
         addSeries(name, xList, yList);
+    }
+
+    public void addDerivative(Derivative derivative) {
+        derivative.addChart(chart);
     }
 
     public void draw() {
