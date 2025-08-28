@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -21,7 +22,14 @@ public class Main {
                 .build();
 
 
-        double derivativePrice = pricer.getPrice(call, stock);
-        System.out.println("Final derivative price: " + derivativePrice);
+//        double derivativePrice = pricer.getPrice(call, stock);
+//        System.out.println("Final derivative price: " + derivativePrice);
+
+        List<Double> distribution = new ArrayList<>();
+        for(int i = 0; i < 100000; i++) {
+            distribution.add(RandomGenerator.getInstance().nextGaussian());
+        }
+
+        Graph.drawDistribution(distribution, 100);
     }
 }
