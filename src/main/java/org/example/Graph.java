@@ -36,7 +36,6 @@ public class Graph {
         plotCount++;
         XYSeries series = chart.addSeries(name, xList, yList);
         series.setMarker(SeriesMarkers.NONE);
-        // series.setSmooth(true);
     }
 
     public void addSeries(String name, List<Double> yList, double xMin, double dx) {

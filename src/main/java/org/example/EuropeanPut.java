@@ -4,12 +4,12 @@ import org.knowm.xchart.XYChart;
 
 import java.util.List;
 
-public class EuropeanCall implements Derivative {
+public class EuropeanPut implements  Derivative {
 
     private final double strikePrice;
     private final double maturity;
 
-    public static class Builder implements BuilderInterface<EuropeanCall> {
+    public static class Builder implements BuilderInterface<EuropeanPut> {
 
         public double strikePrice;
         public double maturity;
@@ -29,19 +29,19 @@ public class EuropeanCall implements Derivative {
             return this;
         }
 
-        public EuropeanCall build() {
-            return new EuropeanCall(this);
+        public EuropeanPut build() {
+            return new EuropeanPut(this);
         }
     }
 
-    public EuropeanCall(Builder builder) {
+    public EuropeanPut(Builder builder) {
         this.strikePrice = builder.strikePrice;
         this.maturity = builder.maturity;
     }
 
     @Override
     public double payoff(List<Double> path) {
-        return Math.max(path.getLast() - strikePrice, 0);
+        return Math.max(strikePrice - path.getLast(), 0);
     }
 
     public double getMaturity() {
@@ -50,6 +50,6 @@ public class EuropeanCall implements Derivative {
 
     @Override
     public void addChart(XYChart chart) {
-        // TODO: Implement visualization for call option
+        // TODO: Implement visualization for put option
     }
 }
