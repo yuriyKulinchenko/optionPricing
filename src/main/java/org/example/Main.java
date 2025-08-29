@@ -8,13 +8,11 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Derivative call = new EuropeanCall.Builder()
-                .setMaturity(1)
-                .setStrikePrice(1.2)
-                .build();
+        Derivative call = new AsianCall(1.2, 1);
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
                 .setIterationCount(10000)
+                .setSteps(1000)
                 .setWorkerThreads(4)
                 .build();
 

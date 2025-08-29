@@ -9,34 +9,9 @@ public class EuropeanCall implements Derivative {
     private final double strikePrice;
     private final double maturity;
 
-    public static class Builder implements BuilderInterface<EuropeanCall> {
-
-        public double strikePrice;
-        public double maturity;
-
-        public Builder() {
-            this.strikePrice = 0;
-            this.maturity = 0;
-        }
-
-        Builder setStrikePrice(double strikePrice) {
-            this.strikePrice = strikePrice;
-            return this;
-        }
-
-        Builder setMaturity(double maturity) {
-            this.maturity = maturity;
-            return this;
-        }
-
-        public EuropeanCall build() {
-            return new EuropeanCall(this);
-        }
-    }
-
-    public EuropeanCall(Builder builder) {
-        this.strikePrice = builder.strikePrice;
-        this.maturity = builder.maturity;
+    public EuropeanCall(double strikePrice, double maturity) {
+        this.strikePrice = strikePrice;
+        this.maturity = maturity;
     }
 
     @Override

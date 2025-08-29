@@ -73,7 +73,7 @@ public class MonteCarloPricer implements DerivativePricer {
             }
         }
 
-        return adder.sum() / workerThreads;
+        return adder.sum() / (workerThreads * N);
     }
 
     private Runnable getRunnable(Derivative derivative, Supplier<StochasticProcess> processSupplier, DoubleAdder adder) {
@@ -82,20 +82,20 @@ public class MonteCarloPricer implements DerivativePricer {
 
         return () -> {
             StochasticProcess process = processSupplier.get();
-            double localSum = 0;
+            double sum = 0;
             double r = process.drift;
-            double scalingFactor = Math.exp(-r * derivative.getMaturity()) / N;
+            double scalingFactor = Math.exp(-r * derivative.getMaturity());
 
             for(int i = 0; i < N; i++) {
                 List<Double> path = process.simulateSteps(steps, dt);
-                localSum += derivative.payoff(path);
-                if(i % 10 == 0 && (i != 0)) {
-                    System.out.println("Current price: " + scalingFactor * localSum * N / i);
+                sum += derivative.payoff(path);
+                if(i % 100 == 0 && (i != 0)) {
+                    System.out.println("Current price: " + scalingFactor  * sum / i);
                 }
                 process.reset();
             }
 
-            adder.add(scalingFactor * localSum);
+            adder.add(scalingFactor * sum); // Discounted sum
         };
     }
 }

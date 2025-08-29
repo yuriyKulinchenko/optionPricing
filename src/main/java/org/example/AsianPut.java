@@ -4,27 +4,31 @@ import org.knowm.xchart.XYChart;
 
 import java.util.List;
 
-public class EuropeanPut implements  Derivative {
-
+public class AsianPut implements Derivative {
     private final double strikePrice;
     private final double maturity;
 
-    public EuropeanPut(double strikePrice, double maturity) {
+    public AsianPut(double strikePrice, double maturity) {
         this.strikePrice = strikePrice;
         this.maturity = maturity;
     }
 
     @Override
     public double payoff(List<Double> path) {
-        return Math.max(strikePrice - path.getLast(), 0);
+        double sum = 0;
+        for(double x: path) {
+            sum += x;
+        }
+        return Math.max(strikePrice - sum / path.size(), 0);
     }
 
+    @Override
     public double getMaturity() {
         return maturity;
     }
 
     @Override
     public void addChart(XYChart chart) {
-        // TODO: Implement visualization for put option
+        // TODO: Implement visualization for asian call option
     }
 }
