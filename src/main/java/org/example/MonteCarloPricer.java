@@ -94,7 +94,9 @@ public class MonteCarloPricer implements DerivativePricer {
         if(MonteCarloPricerConfig.DEBUG) {
             List<Double> samplePrices = samplePricesList.stream()
                     .flatMap(Collection::stream)
+                    .map(x -> scalingFactor * x)
                     .toList();
+            System.out.println("Number of prices sampled: " + samplePrices.size());
             Graph.drawDistribution(samplePrices, 100);
         }
 
@@ -108,10 +110,11 @@ public class MonteCarloPricer implements DerivativePricer {
     ) {
 
         double dt = derivative.getMaturity() / steps;
-        List<Double> samplePrices = new ArrayList<>();
 
         return () -> {
+
             StochasticProcess process = processSupplier.get();
+            List<Double> samplePrices = new ArrayList<>();
 
             if(process.drift != rate) {
                 throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");
@@ -128,8 +131,8 @@ public class MonteCarloPricer implements DerivativePricer {
                 // DEBUG
                 if(MonteCarloPricerConfig.DEBUG) {
                     batchSum += payoff;
-                    if(i % MonteCarloPricerConfig.BATCH_SIZE == 0) {
-                        samplePrices.add(batchSum);
+                    if((i % MonteCarloPricerConfig.BATCH_SIZE) == 0 && (i != 0)) {
+                        samplePrices.add(batchSum / MonteCarloPricerConfig.BATCH_SIZE);
                         batchSum = 0;
                     }
                 }

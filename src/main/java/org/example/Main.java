@@ -11,8 +11,8 @@ public class Main {
         Derivative call = new EuropeanCall(1.2, 1);
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
-                .setIterationCount(10000)
-                .setSteps(1000)
+                .setIterationCount(10_000_000)
+                .setSteps(1)
                 .setWorkerThreads(4)
                 .build();
 

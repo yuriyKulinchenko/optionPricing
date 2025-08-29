@@ -60,9 +60,9 @@ public class Graph {
         double min = Double.MAX_VALUE;
         double max = Double.MIN_VALUE;
 
-        for(int i = 0; i < list.size(); i++) {
-            min = Math.min(min, list.get(i));
-            max = Math.max(max, list.get(i));
+        for (Double aDouble : list) {
+            min = Math.min(min, aDouble);
+            max = Math.max(max, aDouble);
         }
 
         // Buckets need to be set up:
