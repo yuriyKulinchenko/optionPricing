@@ -1,27 +1,35 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.DoubleAdder;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class MonteCarloPricer implements DerivativePricer {
 
     int N; // N is per thread
     int steps;
     int workerThreads;
+    double rate;
+
+    public static class MonteCarloPricerConfig {
+        public static boolean DEBUG = true;
+        public static int BATCH_SIZE = 200;
+    }
 
     public static class Builder implements  BuilderInterface<MonteCarloPricer> {
 
         int N;
         int steps;
         int workerThreads;
+        double rate;
 
         public Builder() {
             N = 1000;
             steps = 100;
             workerThreads = Runtime.getRuntime().availableProcessors() / 2;
+            rate = UniversalData.riskFreeRate;
         }
 
         Builder setIterationCount(int N) {
@@ -31,6 +39,11 @@ public class MonteCarloPricer implements DerivativePricer {
 
         Builder setSteps(int steps) {
             this.steps = steps;
+            return this;
+        }
+
+        Builder setRate(double rate) {
+            this.rate = rate;
             return this;
         }
 
@@ -49,13 +62,17 @@ public class MonteCarloPricer implements DerivativePricer {
         this.N = builder.N;
         this.steps = builder.steps;
         this.workerThreads = builder.workerThreads;
+        this.rate = builder.rate;
     }
 
     @Override
     public double getPrice(Derivative derivative, Supplier<StochasticProcess> processSupplier) {
 
         DoubleAdder adder = new DoubleAdder();
-        Runnable runnable = getRunnable(derivative, processSupplier, adder);
+        List<List<Double>> samplePricesList = Collections.synchronizedList(new ArrayList<>());
+        Runnable runnable = getRunnable(derivative, processSupplier, adder, samplePricesList);
+
+        double scalingFactor = Math.exp(-rate * derivative.getMaturity());
 
         List<Thread> threads = new ArrayList<>();
 
@@ -73,29 +90,58 @@ public class MonteCarloPricer implements DerivativePricer {
             }
         }
 
-        return adder.sum() / (workerThreads * N);
+        // DEBUG
+        if(MonteCarloPricerConfig.DEBUG) {
+            List<Double> samplePrices = samplePricesList.stream()
+                    .flatMap(Collection::stream)
+                    .toList();
+            Graph.drawDistribution(samplePrices, 100);
+        }
+
+        return (scalingFactor * adder.sum()) / (workerThreads * N);
     }
 
-    private Runnable getRunnable(Derivative derivative, Supplier<StochasticProcess> processSupplier, DoubleAdder adder) {
+    private Runnable getRunnable(Derivative derivative,
+                                 Supplier<StochasticProcess> processSupplier,
+                                 DoubleAdder adder,
+                                 List<List<Double>> samplePricesList
+    ) {
 
         double dt = derivative.getMaturity() / steps;
+        List<Double> samplePrices = new ArrayList<>();
 
         return () -> {
             StochasticProcess process = processSupplier.get();
+
+            if(process.drift != rate) {
+                throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");
+            }
+
             double sum = 0;
-            double r = process.drift;
-            double scalingFactor = Math.exp(-r * derivative.getMaturity());
+            double batchSum = 0;
 
             for(int i = 0; i < N; i++) {
                 List<Double> path = process.simulateSteps(steps, dt);
-                sum += derivative.payoff(path);
-                if(i % 100 == 0 && (i != 0)) {
-                    System.out.println("Current price: " + scalingFactor  * sum / i);
+                double payoff = derivative.payoff(path);
+                sum += payoff;
+
+                // DEBUG
+                if(MonteCarloPricerConfig.DEBUG) {
+                    batchSum += payoff;
+                    if(i % MonteCarloPricerConfig.BATCH_SIZE == 0) {
+                        samplePrices.add(batchSum);
+                        batchSum = 0;
+                    }
                 }
+
                 process.reset();
             }
 
-            adder.add(scalingFactor * sum); // Discounted sum
+            adder.add(sum);
+
+            if(MonteCarloPricerConfig.DEBUG) {
+                samplePricesList.add(samplePrices);
+            }
         };
     }
 }

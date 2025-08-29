@@ -8,7 +8,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Derivative call = new AsianCall(1.2, 1);
+        Derivative call = new EuropeanCall(1.2, 1);
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
                 .setIterationCount(10000)
@@ -16,8 +16,8 @@ public class Main {
                 .setWorkerThreads(4)
                 .build();
 
-        double mu = 0.05;
-        double sigma = 0.15;
+        double mu = UniversalData.riskFreeRate;
+        double sigma = UniversalData.volatility;
         double spot = 1;
 
         Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
