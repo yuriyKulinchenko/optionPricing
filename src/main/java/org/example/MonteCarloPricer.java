@@ -14,7 +14,7 @@ public class MonteCarloPricer implements DerivativePricer {
     double rate;
 
     public static class MonteCarloPricerConfig {
-        public static boolean DEBUG = true;
+        public static boolean DEBUG = false;
         public static int BATCH_SIZE = 200;
     }
 
@@ -115,6 +115,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
             StochasticProcess process = processSupplier.get();
             List<Double> samplePrices = new ArrayList<>();
+            Random random = new Random();
 
             if(process.drift != rate) {
                 throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");
@@ -124,7 +125,10 @@ public class MonteCarloPricer implements DerivativePricer {
             double batchSum = 0;
 
             for(int i = 0; i < N; i++) {
-                List<Double> path = process.simulateSteps(steps, dt);
+
+                List<Double> randoms = new ArrayList<>();
+                for(int j = 0; j < steps; j++) randoms.add(random.nextGaussian());
+                List<Double> path = process.simulateSteps(steps, dt, randoms);
                 double payoff = derivative.payoff(path);
                 sum += payoff;
 

@@ -43,6 +43,14 @@ public class Graph {
         addSeries(name, xList, yList);
     }
 
+    public void addProcess(List<Double> yList, double dt) {
+        List<Double> xList = new ArrayList<>();
+        for (int i = 0; i < yList.size(); i++) {
+            xList.add(i * dt);
+        }
+        addSeries("Asset " + plotCount, xList, yList);
+    }
+
     public void addDerivative(Derivative derivative) {
         derivative.addChart(chart);
     }

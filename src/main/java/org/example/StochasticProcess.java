@@ -17,12 +17,12 @@ public abstract class StochasticProcess {
         current = spot;
     }
 
-    public abstract double simulateStep(double dt);
+    public abstract double simulateStep(double dt, double Z);
 
-    public List<Double> simulateSteps(double count, double dt) {
+    public List<Double> simulateSteps(double count, double dt, List<Double> randoms) {
         List<Double> list = new ArrayList<>();
         for(int i = 0; i < count; i++) {
-            list.add(simulateStep(dt));
+            list.add(simulateStep(dt, randoms.get(i)));
         }
         return list;
     }

@@ -8,7 +8,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Derivative call = new EuropeanCall(1.2, 1);
+        Derivative call = new EuropeanPut(1.2, 1);
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
                 .setIterationCount(10_000_000)

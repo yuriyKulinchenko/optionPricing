@@ -7,8 +7,7 @@ public class GeometricBrownianMotion extends StochasticProcess {
     }
 
     @Override
-    public double simulateStep(double dt) {
-        double Z = RandomGenerator.getInstance().nextGaussian();
+    public double simulateStep(double dt, double Z) {
         double adjustedDrift = drift - 0.5 * volatility * volatility;
         current *=  Math.exp(adjustedDrift * dt + volatility * Math.sqrt(dt) * Z);
         return current;
