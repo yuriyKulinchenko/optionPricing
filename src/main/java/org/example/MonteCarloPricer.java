@@ -128,8 +128,15 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 List<Double> randoms = new ArrayList<>();
                 for(int j = 0; j < steps; j++) randoms.add(random.nextGaussian());
+                List<Double> randomsPair = new ArrayList<>(randoms).stream().map(x -> -x).toList();
+
                 List<Double> path = process.simulateSteps(steps, dt, randoms);
-                double payoff = derivative.payoff(path);
+                process.reset();
+                List<Double> pathPair = process.simulateSteps(steps, dt, randomsPair);
+                process.reset();
+
+                double payoff = 0.5 * (derivative.payoff(path) + derivative.payoff(pathPair));
+
                 sum += payoff;
 
                 // DEBUG
@@ -140,8 +147,6 @@ public class MonteCarloPricer implements DerivativePricer {
                         batchSum = 0;
                     }
                 }
-
-                process.reset();
             }
 
             adder.add(sum);
