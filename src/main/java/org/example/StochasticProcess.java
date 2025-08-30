@@ -19,10 +19,10 @@ public abstract class StochasticProcess {
 
     public abstract double simulateStep(double dt, double Z);
 
-    public List<Double> simulateSteps(double count, double dt, List<Double> randoms) {
+    public List<Double> simulateSteps(double count, double dt, double[] randoms) {
         List<Double> list = new ArrayList<>();
         for(int i = 0; i < count; i++) {
-            list.add(simulateStep(dt, randoms.get(i)));
+            list.add(simulateStep(dt, randoms[i]));
         }
         return list;
     }

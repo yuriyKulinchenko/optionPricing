@@ -7,20 +7,20 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Derivative call = new EuropeanPut(1.2, 1);
-
         DerivativePricer pricer = new MonteCarloPricer.Builder()
-                .setIterationCount(10_000_000)
+                .setIterationCount(1_000_000)
                 .setSteps(500)
                 .setWorkerThreads(4)
                 .build();
 
+        Derivative call = new AsianCall(100, 1);
+
         double mu = UniversalData.riskFreeRate;
-        double sigma = UniversalData.volatility;
-        double spot = 1;
+        double sigma = 0.25;
+        double spot = 100;
 
         Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
-//        double derivativePrice = pricer.getPrice(call, supplier);
-//        System.out.println("Final derivative price: " + derivativePrice);
+        double derivativePrice = pricer.getPrice(call, supplier);
+        System.out.println("Final derivative price: " + derivativePrice);
     }
 }

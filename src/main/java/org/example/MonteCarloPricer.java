@@ -1,10 +1,10 @@
 package org.example;
 
+import org.apache.commons.math3.random.SobolSequenceGenerator;
+
 import java.util.*;
 import java.util.concurrent.atomic.DoubleAdder;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class MonteCarloPricer implements DerivativePricer {
 
@@ -14,7 +14,7 @@ public class MonteCarloPricer implements DerivativePricer {
     double rate;
 
     public static class MonteCarloPricerConfig {
-        public static boolean DEBUG = false;
+        public static boolean DEBUG = true;
         public static int BATCH_SIZE = 200;
     }
 
@@ -115,7 +115,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
             StochasticProcess process = processSupplier.get();
             List<Double> samplePrices = new ArrayList<>();
-            Random random = new Random();
+            SobolSequenceGenerator generator = Sobol.getGenerator(steps, N);
 
             if(process.drift != rate) {
                 throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");
@@ -126,16 +126,13 @@ public class MonteCarloPricer implements DerivativePricer {
 
             for(int i = 0; i < N; i++) {
 
-                List<Double> randoms = new ArrayList<>();
-                for(int j = 0; j < steps; j++) randoms.add(random.nextGaussian());
-                List<Double> randomsPair = new ArrayList<>(randoms).stream().map(x -> -x).toList();
+                double[] randoms = generator.nextVector();
+                Sobol.transformToNormal(randoms);
 
                 List<Double> path = process.simulateSteps(steps, dt, randoms);
                 process.reset();
-                List<Double> pathPair = process.simulateSteps(steps, dt, randomsPair);
-                process.reset();
 
-                double payoff = 0.5 * (derivative.payoff(path) + derivative.payoff(pathPair));
+                double payoff = derivative.payoff(path);
 
                 sum += payoff;
 

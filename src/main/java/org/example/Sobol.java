@@ -2,9 +2,9 @@ package org.example;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
-public class Sobel {
+public class Sobol {
 
-    private static int index = 0;
+    private static int index = 1;
 
 
     public static synchronized SobolSequenceGenerator getGenerator(int d, int N) {
