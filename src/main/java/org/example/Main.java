@@ -1,7 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class Main {
@@ -12,7 +11,7 @@ public class Main {
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
                 .setIterationCount(10_000_000)
-                .setSteps(1)
+                .setSteps(500)
                 .setWorkerThreads(4)
                 .build();
 
@@ -21,8 +20,7 @@ public class Main {
         double spot = 1;
 
         Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
-        double derivativePrice = pricer.getPrice(call, supplier);
-        System.out.println("Final derivative price: " + derivativePrice);
-
+//        double derivativePrice = pricer.getPrice(call, supplier);
+//        System.out.println("Final derivative price: " + derivativePrice);
     }
 }
