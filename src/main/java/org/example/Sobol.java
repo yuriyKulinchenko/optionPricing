@@ -1,4 +1,5 @@
 package org.example;
+import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
@@ -11,10 +12,18 @@ public class Sobol {
     private static Map<Integer, Integer> indexMap = new HashMap<>();
     private static Map<Integer, double[]> deltaMap = new HashMap<>();
 
+
+    private final int d;
+    private final int N;
+    private int index = 0;
+
     private final double[] delta;
     private final SobolSequenceGenerator generator;
 
     public Sobol(int d, int N) {
+        this.d = d;
+        this.N = N;
+
         SobolSequenceGenerator generator = new SobolSequenceGenerator(d);
         generator.skipTo(getOffset(d, N));
         this.generator = generator;
@@ -37,7 +46,9 @@ public class Sobol {
         return index;
     }
 
-    public double[] nextNormalVector() {
+    public double[] nextNormalVector() throws OutOfRangeException {
+        index++;
+        if(index > d) throw new OutOfRangeException(index, 0, d);
         double[] uniforms = generator.nextVector();
         for(int i = 0; i < uniforms.length; i++) {
             double x = uniforms[i] += delta[i];
