@@ -115,7 +115,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
             StochasticProcess process = processSupplier.get();
             List<Double> samplePrices = new ArrayList<>();
-            SobolSequenceGenerator generator = Sobol.getGenerator(steps, N);
+            Sobol sobol = new Sobol(steps, N);
 
             if(process.drift != rate) {
                 throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");
@@ -126,8 +126,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
             for(int i = 0; i < N; i++) {
 
-                double[] randoms = generator.nextVector();
-                Sobol.transformToNormal(randoms);
+                double[] randoms = sobol.nextNormalVector();
 
                 List<Double> path = process.simulateSteps(steps, dt, randoms);
                 process.reset();
