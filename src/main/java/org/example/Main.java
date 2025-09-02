@@ -20,21 +20,9 @@ public class Main {
         double sigma = 0.25;
         double spot = 100;
 
-//        Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
-//        double derivativePrice = pricer.getPrice(call, supplier);
-//        System.out.println("Final derivative price: " + derivativePrice);
+        Supplier<StochasticProcess> supplier = () -> new GeometricBrownianBridge(spot, mu, sigma);
+        double derivativePrice = pricer.getPrice(call, supplier);
+        System.out.println("Final derivative price: " + derivativePrice);
 
-        GeometricBrownianBridge bridge = new GeometricBrownianBridge(spot, mu, sigma);
-        GeometricBrownianMotion motion = new GeometricBrownianMotion(spot, mu, sigma);
-
-        double[] randoms = new Sobol(1000, 100).nextNormalVector();
-
-        List<Double> bridgeProcess = bridge.simulateSteps(1000, 0.001, randoms);
-        List<Double> motionProcess = motion.simulateSteps(1000, 0.001, randoms);
-
-        Graph.getInstance().addProcess(bridgeProcess, 0.001);
-        Graph.getInstance().addProcess(motionProcess, 0.001);
-
-        Graph.getInstance().draw();
     }
 }

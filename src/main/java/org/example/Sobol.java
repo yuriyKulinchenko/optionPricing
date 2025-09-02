@@ -13,7 +13,6 @@ public class Sobol {
     private static Map<Integer, double[]> deltaMap = new HashMap<>();
 
 
-    private final int d;
     private final int N;
     private int index = 0;
 
@@ -21,7 +20,6 @@ public class Sobol {
     private final SobolSequenceGenerator generator;
 
     public Sobol(int d, int N) {
-        this.d = d;
         this.N = N;
 
         SobolSequenceGenerator generator = new SobolSequenceGenerator(d);
@@ -48,7 +46,7 @@ public class Sobol {
 
     public double[] nextNormalVector() throws OutOfRangeException {
         index++;
-        if(index > d) throw new OutOfRangeException(index, 0, d);
+        if(index > N) throw new OutOfRangeException(index, 0, N);
         double[] uniforms = generator.nextVector();
         for(int i = 0; i < uniforms.length; i++) {
             double x = uniforms[i] += delta[i];
