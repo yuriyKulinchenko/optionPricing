@@ -8,6 +8,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
 
     private double[] randoms;
     private int index;
+    private double dt;
 
     public GeometricBrownianBridge(double spot, double drift, double volatility) {
         super(spot, drift, volatility);
@@ -17,23 +18,33 @@ public class GeometricBrownianBridge extends StochasticProcess {
     public List<Double> simulateSteps(int count, double dt, double[] randoms) {
         this.randoms = randoms;
         this.index = 0;
+        this.dt = dt;
 
-        List<Double> process = new ArrayList<>(Collections.nCopies(randoms.length, null));
-        double variance = (randoms.length - 1) * dt;
-        process.set(0, 0.);
-        process.set(randoms.length - 1, getNormal(0, variance));
-        simulateWienerProcess(process, 0, randoms.length - 1);
-        return process;
+        double[] process = new double[randoms.length];
+        double variance = (process.length - 1) * dt;
+        process[0] = 0;
+        process[process.length - 1] = getNormal(0, variance);
+        simulateWienerProcess(process, 0, process.length - 1);
+
+        List<Double> prices = new ArrayList<>(process.length);
+
+        for(int i = 0; i < process.length; i++) {
+            double adjustedDrift = drift - 0.5 * volatility * volatility;
+            double t = i * dt;
+            prices.add(spot * Math.exp(adjustedDrift * t + volatility * process[i]));
+        }
+
+        return prices;
     }
 
-    public void simulateWienerProcess(List<Double> process, int i, int k) {
+    public void simulateWienerProcess(double[] process, int i, int k) {
         if(i == k) return;
         int j = (i + k) / 2;
         if((i == j) || (j == k)) return;
 
-        double variance = (double) ((j - i) * (k - j)) / (k - i);
-        double mean = ((k - j) * process.get(k) + (j - i) * process.get(i)) / (k - i);
-        process.set(j, getNormal(mean, variance));
+        double variance = (dt * (j - i) * (k - j)) / (k - i);
+        double mean = ((k - j) * process[i] + (j - i) * process[k]) / (k - i);
+        process[j] = getNormal(mean, variance);
 
         simulateWienerProcess(process, i, j);
         simulateWienerProcess(process, j, k);
