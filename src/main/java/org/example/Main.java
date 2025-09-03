@@ -1,7 +1,5 @@
 package org.example;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Supplier;
 
 public class Main {
@@ -14,14 +12,16 @@ public class Main {
                 .setWorkerThreads(4)
                 .build();
 
-        Derivative call = new AsianCall(100, 1);
+        Derivative put = new EuropeanPut(100, 1);
+        Derivative option = new Barrier(put, 120, true);
+
 
         double mu = UniversalData.riskFreeRate;
         double sigma = 0.25;
         double spot = 100;
 
-        Supplier<StochasticProcess> supplier = () -> new GeometricBrownianBridge(spot, mu, sigma);
-        double derivativePrice = pricer.getPrice(call, supplier);
+        Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
+        double derivativePrice = pricer.getPrice(option, supplier);
         System.out.println("Final derivative price: " + derivativePrice);
 
     }
