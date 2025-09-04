@@ -8,20 +8,18 @@ public class Main {
 
         DerivativePricer pricer = new MonteCarloPricer.Builder()
                 .setIterationCount(1_000_000)
-                .setSteps(500)
+                .setSteps(10)
                 .setWorkerThreads(4)
                 .build();
 
         Derivative put = new EuropeanPut(100, 1);
-        Derivative option = new Barrier(put, 120, true);
-
 
         double mu = UniversalData.riskFreeRate;
         double sigma = 0.25;
         double spot = 100;
 
         Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, mu, sigma);
-        double derivativePrice = pricer.getPrice(option, supplier);
+        double derivativePrice = pricer.getPrice(put, supplier);
         System.out.println("Final derivative price: " + derivativePrice);
 
     }
