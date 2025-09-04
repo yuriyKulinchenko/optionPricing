@@ -3,15 +3,16 @@ package org.example;
 import javafx.application.Application;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableObjectValue;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import javax.swing.*;
 
 public class HelloFX extends Application {
@@ -41,24 +42,34 @@ public class HelloFX extends Application {
 
     private static class DerivativeState {}
 
-    private VBox configBox() {
+    private Node configBox() {
+
+        Label title = new Label("Configuration");
+        title.setStyle("-fx-font-size: 16px;");
 
         TextField spotField = new TextField();
         spotField.setPromptText("Enter spot price");
+        spotField.setMaxWidth(200);
 
         TextField volField = new TextField();
         volField.setPromptText("Enter volatility");
+        volField.setMaxWidth(200);
+
 
         TextField interestField = new TextField();
         interestField.setPromptText("Enter interest rate");
+        interestField.setMaxWidth(200);
+
 
         StackPane derivativeConfig = new StackPane();
         derivativeConfig.getChildren().add(europeanConfigBox());
+        derivativeConfig.setMaxWidth(200);
 
         ComboBox<String> optionSelector = new ComboBox<>();
         optionSelector.setPromptText("Select option type");
         optionSelector.getItems().addAll("European", "Asian", "Barrier");
         optionSelector.setValue("European");
+        optionSelector.setMaxWidth(200);
 
 
         optionSelector.setOnAction(e -> {
@@ -74,7 +85,8 @@ public class HelloFX extends Application {
         Separator separator = new Separator();
         separator.setOrientation(Orientation.HORIZONTAL);
 
-        return new VBox(8.,
+        VBox config = new VBox(8.,
+                title,
                 spotField,
                 volField,
                 interestField,
@@ -82,21 +94,66 @@ public class HelloFX extends Application {
                 separator,
                 derivativeConfig
         );
+
+        config.setPadding(new Insets(10));
+        config.setAlignment(Pos.TOP_LEFT);
+        return config;
     }
 
-    private VBox europeanConfigBox() {
-        Label label = new Label("European option configuration");
-        return new VBox(8, label);
+    private Node europeanConfigBox() {
+        TextField spotField = new TextField();
+        spotField.setPromptText("Enter spot price");
+        spotField.setMaxWidth(200);
+
+        return spotField;
     }
 
-    private VBox asianConfigBox() {
-        Label label = new Label("Asian option configuration");
-        return new VBox(8, label);
+    private Node asianConfigBox() {
+        TextField spotField = new TextField();
+        spotField.setPromptText("Enter spot price");
+        spotField.setMaxWidth(200);
+
+        return spotField;
     }
 
-    private VBox barrierConfigBox() {
-        Label label = new Label("Barrier option configuration");
-        return new VBox(8, label);
+    private Node barrierConfigBox() {
+        TextField barrierField = new TextField();
+        barrierField.setPromptText("Enter barrier price");
+        barrierField.setMaxWidth(200);
+
+        StackPane derivativeConfig = new StackPane();
+        derivativeConfig.getChildren().add(europeanConfigBox());
+
+        ComboBox<String> optionSelector = new ComboBox<>();
+        optionSelector.setPromptText("Select option type");
+        optionSelector.getItems().addAll("European", "Asian");
+        optionSelector.setValue("European");
+        optionSelector.setMaxWidth(200);
+
+        Separator separator = new Separator();
+        separator.setOrientation(Orientation.HORIZONTAL);
+
+        return new VBox(8,
+                barrierField,
+                optionSelector,
+                separator,
+                derivativeConfig
+                );
+    }
+
+    private Node graphBox() {
+
+        Label title = new Label("Graphs");
+        title.setStyle("-fx-font-size: 16px;");
+
+
+        VBox graphs = new VBox(8.,
+                title
+        );
+
+        graphs.setPadding(new Insets(10));
+        graphs.setAlignment(Pos.TOP_LEFT);
+        return graphs;
     }
 
 
@@ -125,12 +182,17 @@ public class HelloFX extends Application {
         // Assembly
 
         VBox box = new VBox(20, inputField, btn, mirrorLabel);
+        StackPane root = new StackPane(box); // Temp
 
-        StackPane root = new StackPane(box);
+        SplitPane sp = new SplitPane(configBox(), graphBox());
 
-        SplitPane sp = new SplitPane(configBox(), root);
+        sp.getDividers().getFirst().positionProperty()
+                .addListener((_, _, _) -> {
+                    double val = 200.0 / sp.getWidth();
+                    sp.setDividerPositions(val);
+                });
 
-        Scene scene = new Scene(sp, 400, 300);
+        Scene scene = new Scene(sp, 1000, 500);
 
 
         stage.setTitle("Hello JavaFX");
