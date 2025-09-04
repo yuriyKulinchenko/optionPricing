@@ -62,7 +62,7 @@ public class HelloFX extends Application {
 
 
         StackPane derivativeConfig = new StackPane();
-        derivativeConfig.getChildren().add(europeanConfigBox());
+        derivativeConfig.getChildren().add(europeanConfigBox(false));
         derivativeConfig.setMaxWidth(200);
 
         ComboBox<String> optionSelector = new ComboBox<>();
@@ -75,15 +75,17 @@ public class HelloFX extends Application {
         optionSelector.setOnAction(e -> {
             String selected = optionSelector.getValue();
             derivativeConfig.getChildren().setAll(switch (selected)  {
-                case "European" -> europeanConfigBox();
-                case "Asian" -> asianConfigBox();
+                case "European" -> europeanConfigBox(false);
+                case "Asian" -> asianConfigBox(false);
                 case "Barrier" -> barrierConfigBox();
                 default -> throw new IllegalStateException("Unexpected value: " + selected);
             });
         });
 
-        Separator separator = new Separator();
-        separator.setOrientation(Orientation.HORIZONTAL);
+
+        Button btn = new Button("Calculate option price");
+
+        btn.setMaxWidth(200);
 
         VBox config = new VBox(8.,
                 title,
@@ -91,8 +93,10 @@ public class HelloFX extends Application {
                 volField,
                 interestField,
                 optionSelector,
-                separator,
-                derivativeConfig
+                getSeparator(Orientation.HORIZONTAL),
+                derivativeConfig,
+                getSeparator(Orientation.HORIZONTAL),
+                btn
         );
 
         config.setPadding(new Insets(10));
@@ -100,20 +104,26 @@ public class HelloFX extends Application {
         return config;
     }
 
-    private Node europeanConfigBox() {
+    private Node europeanConfigBox(boolean barrier) {
         TextField spotField = new TextField();
         spotField.setPromptText("Enter spot price");
         spotField.setMaxWidth(200);
 
-        return spotField;
+        return new VBox(8,
+                new Label("European option" + (barrier ? " (underlying)" : "")),
+                spotField
+                );
     }
 
-    private Node asianConfigBox() {
+    private Node asianConfigBox(boolean barrier) {
         TextField spotField = new TextField();
         spotField.setPromptText("Enter spot price");
         spotField.setMaxWidth(200);
 
-        return spotField;
+        return new VBox(8,
+                new Label("Asian option" + (barrier ? " (underlying)" : "")),
+                spotField
+        );
     }
 
     private Node barrierConfigBox() {
@@ -122,7 +132,7 @@ public class HelloFX extends Application {
         barrierField.setMaxWidth(200);
 
         StackPane derivativeConfig = new StackPane();
-        derivativeConfig.getChildren().add(europeanConfigBox());
+        derivativeConfig.getChildren().add(europeanConfigBox(true));
 
         ComboBox<String> optionSelector = new ComboBox<>();
         optionSelector.setPromptText("Select option type");
@@ -130,10 +140,20 @@ public class HelloFX extends Application {
         optionSelector.setValue("European");
         optionSelector.setMaxWidth(200);
 
+        optionSelector.setOnAction(e -> {
+            String selected = optionSelector.getValue();
+            derivativeConfig.getChildren().setAll(switch (selected)  {
+                case "European" -> europeanConfigBox(true);
+                case "Asian" -> asianConfigBox(true);
+                default -> throw new IllegalStateException("Unexpected value: " + selected);
+            });
+        });
+
         Separator separator = new Separator();
         separator.setOrientation(Orientation.HORIZONTAL);
 
         return new VBox(8,
+                new Label("Barrier option"),
                 barrierField,
                 optionSelector,
                 separator,
@@ -154,6 +174,12 @@ public class HelloFX extends Application {
         graphs.setPadding(new Insets(10));
         graphs.setAlignment(Pos.TOP_LEFT);
         return graphs;
+    }
+
+    private Separator getSeparator(Orientation orientation) {
+        Separator separator = new Separator();
+        separator.setOrientation(orientation);
+        return separator;
     }
 
 
