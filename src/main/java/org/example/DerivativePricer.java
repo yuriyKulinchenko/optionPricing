@@ -7,13 +7,29 @@ import java.util.function.Supplier;
 
 public interface DerivativePricer {
 
-    public static class PricerResult {
+    class PricerResult {
+
         public double derivativePrice;
         public List<List<Vector2D>> paths;
 
-        public PricerResult(double derivativePrice, List<List<Vector2D>> paths) {
+        public List<Double> sums;
+        public List<Double> squares;
+
+        public int chunkSize;
+
+        public PricerResult(
+                double derivativePrice,
+                List<List<Vector2D>> paths,
+                List<Double> sums,
+                List<Double> squares,
+                int chunkSize
+
+        ) {
             this.derivativePrice = derivativePrice;
             this.paths = paths;
+            this.sums = sums;
+            this.squares = squares;
+            this.chunkSize = chunkSize;
         }
     }
 

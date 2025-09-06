@@ -208,6 +208,14 @@ public class UIConfig extends Application {
 
         btn.setOnAction(e -> {
 
+            // Parse config state:
+
+            double spot = Double.parseDouble(configState.spot.get());
+            double interest = Double.parseDouble(configState.interest.get());
+            double vol = Double.parseDouble(configState.vol.get());
+
+            Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, interest, vol);
+
             // Parse simulation state:
 
             int simulationCount = Integer.parseInt(simulationState.simulationCount.get());
@@ -216,15 +224,8 @@ public class UIConfig extends Application {
             DerivativePricer pricer = new MonteCarloPricer.Builder()
                     .setIterationCount(simulationCount)
                     .setSteps(stepCount)
+                    .setRate(interest)
                     .build();
-
-            // Parse config state:
-
-            double spot = Double.parseDouble(configState.spot.get());
-            double interest = Double.parseDouble(configState.interest.get());
-            double vol = Double.parseDouble(configState.vol.get());
-
-            Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, interest, vol);
 
             // Parse derivative:
 
@@ -359,28 +360,27 @@ public class UIConfig extends Application {
         return config;
     }
 
-    private Node graphBox() {
+    private Node outputBox() {
 
         Label title = new Label("Graphs");
         title.setStyle("-fx-font-size: 16px;");
 
-        VBox simulationGraph = new VBox(8, UIGraph.getSimulationPaths(new ArrayList<>()));
+        HBox graphs = new HBox(8,
+                UIGraph.simulationChart,
+                UIGraph.varianceChart
+        );
 
         pricerResult.addListener((_, _, val) -> {
-            simulationGraph.getChildren().removeFirst();
-            simulationGraph.getChildren().addAll(UIGraph.getSimulationPaths(val.paths));
+            UIGraph.populateSimulationChart(val.paths);
+            UIGraph.populateVarianceChart(val.sums, val.squares, val.chunkSize);
         });
-
-
-        VBox graphs = new VBox(8.,
-                title,
-                simulationGraph
-        );
 
 
         graphs.setPadding(new Insets(10));
         graphs.setAlignment(Pos.TOP_LEFT);
-        return graphs;
+        return new VBox(8.,
+                graphs
+        );
     }
 
     private Separator getSeparator(Orientation orientation) {
@@ -396,9 +396,13 @@ public class UIConfig extends Application {
         Node derivativeConfig = configBox();
         Node simulationConfig = simulationConfigBox();
 
-        Node config = new VBox(8, simulationConfig, derivativeConfig);
+        Node config = new VBox(8,
+                simulationConfig,
+                getSeparator(Orientation.HORIZONTAL),
+                derivativeConfig
+        );
 
-        Node graph = graphBox();
+        Node graph = outputBox();
 
         SplitPane sp = new SplitPane(config, graph);
 
