@@ -5,6 +5,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -15,20 +16,24 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 public class UIConfig extends Application {
 
     private final DerivativeConfigState configState = new DerivativeConfigState();
     private final SimulationConfigState simulationState = new SimulationConfigState();
+
     private final SimpleObjectProperty<DerivativeState>  derivativeState =
             new SimpleObjectProperty<>(new DerivativeState.European());
+    private final SimpleObjectProperty<DerivativePricer.PricerResult> pricerResult =
+            new SimpleObjectProperty<>();
 
     public static class SimulationConfigState {
         public SimpleStringProperty timeStepCount;
         public SimpleStringProperty simulationCount;
 
         public SimulationConfigState() {
-            timeStepCount = new SimpleStringProperty("0.01");
+            timeStepCount = new SimpleStringProperty("100");
             simulationCount = new SimpleStringProperty("1000");
         }
 
@@ -130,32 +135,40 @@ public class UIConfig extends Application {
         }
     }
 
+    private TextField createConfigField(SimpleStringProperty property) {
+        TextField field = new TextField();
+        field.setMaxWidth(100);
+        field.setText(property.get());
+        field.textProperty().addListener((_, _, val) -> property.set(val));
+        return field;
+    }
+
+    private GridPane createConfigForm() {
+        GridPane form = new GridPane();
+        form.setHgap(12);
+        form.setVgap(10);
+
+        ColumnConstraints leftCol = new ColumnConstraints();
+        leftCol.setHgrow(Priority.NEVER);
+
+        ColumnConstraints rightCol = new ColumnConstraints();
+        rightCol.setHgrow(Priority.ALWAYS);
+        rightCol.setHalignment(HPos.RIGHT);
+
+        form.getColumnConstraints().addAll(leftCol, rightCol);
+        return form;
+    }
+
     private Node configBox() {
 
         Label title = new Label("Derivative configuration");
         title.setStyle("-fx-font-size: 16px;");
 
-        TextField spotField = new TextField();
-        spotField.setPromptText("Enter spot price");
-        spotField.setMaxWidth(200);
-        spotField.textProperty().addListener((obs, oldVal, newVal) -> {
-            configState.spot.set(newVal);
-        });
+        GridPane form = createConfigForm();
 
-        TextField volField = new TextField();
-        volField.setPromptText("Enter volatility");
-        volField.setMaxWidth(200);
-        volField.textProperty().addListener((obs, oldVal, newVal) -> {
-            configState.vol.set(newVal);
-        });
-
-
-        TextField interestField = new TextField();
-        interestField.setPromptText("Enter interest rate");
-        interestField.setMaxWidth(200);
-        interestField.textProperty().addListener((obs, oldVal, newVal) -> {
-            configState.interest.set(newVal);
-        });
+        form.addRow(0, new Label("Underlying Price"), createConfigField(configState.spot));
+        form.addRow(1, new Label("Volatility"), createConfigField(configState.vol));
+        form.addRow(2, new Label("Interest Rates"), createConfigField(configState.interest));
 
 
         StackPane derivativeConfig = new StackPane();
@@ -195,15 +208,49 @@ public class UIConfig extends Application {
 
         btn.setOnAction(e -> {
 
-        }); // Nothing for now
+            // Parse simulation state:
+
+            int simulationCount = Integer.parseInt(simulationState.simulationCount.get());
+            int stepCount = Integer.parseInt(simulationState.timeStepCount.get());
+
+            DerivativePricer pricer = new MonteCarloPricer.Builder()
+                    .setIterationCount(simulationCount)
+                    .setSteps(stepCount)
+                    .build();
+
+            // Parse config state:
+
+            double spot = Double.parseDouble(configState.spot.get());
+            double interest = Double.parseDouble(configState.interest.get());
+            double vol = Double.parseDouble(configState.vol.get());
+
+            Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, interest, vol);
+
+            // Parse derivative:
+
+            Derivative derivative = null;
+
+            DerivativeState state = derivativeState.get();
+
+            if(state instanceof DerivativeState.European european) {
+                double strike = Double.parseDouble(european.strike.get());
+                double maturity = Double.parseDouble(european.maturity.get());
+                derivative = new EuropeanCall(strike, maturity);
+            } else if(state instanceof DerivativeState.Asian asian) {
+                double strike = Double.parseDouble(asian.strike.get());
+                double maturity = Double.parseDouble(asian.maturity.get());
+                derivative = new AsianCall(strike, maturity);
+            } else if(state instanceof DerivativeState.Barrier barrier) {
+                // No handling for now
+            }
+            pricerResult.set(pricer.getPrice(derivative, supplier));
+        });
 
         btn.setMaxWidth(200);
 
         VBox config = new VBox(8.,
                 title,
-                spotField,
-                volField,
-                interestField,
+                form,
                 optionSelector,
                 getSeparator(Orientation.HORIZONTAL),
                 derivativeConfig,
@@ -217,13 +264,6 @@ public class UIConfig extends Application {
     }
 
     private Node europeanConfigBox(boolean barrier) {
-        TextField strikeField = new TextField();
-        strikeField.setPromptText("Enter strike price");
-        strikeField.setMaxWidth(200);
-
-        TextField maturityField = new TextField();
-        maturityField.setPromptText("Enter maturity");
-        maturityField.setMaxWidth(200);
 
         DerivativeState.European europeanState;
 
@@ -235,33 +275,16 @@ public class UIConfig extends Application {
             europeanState = (DerivativeState.European) derivativeState.get();
         }
 
-        strikeField.textProperty().addListener(((_, _, val) -> {
-            europeanState.strike.set(val);
-            System.out.println(val);
-        }));
+        GridPane form = createConfigForm();
 
-        maturityField.textProperty().addListener(((_, _, val) -> {
-            europeanState.maturity.set(val);
-            System.out.println(val);
-        }));
-
-
+        form.addRow(0, new Label("Strike price"), createConfigField(europeanState.strike));
+        form.addRow(1, new Label("Maturity"), createConfigField(europeanState.maturity));
 
         return new VBox(8,
-                new Label("European option" + (barrier ? " (underlying)" : "")),
-                strikeField,
-                maturityField
-                );
+                new Label("European option" + (barrier ? " (underlying)" : "")), form);
     }
 
     private Node asianConfigBox(boolean barrier) {
-        TextField strikeField = new TextField();
-        strikeField.setPromptText("Enter strike price");
-        strikeField.setMaxWidth(200);
-
-        TextField maturityField = new TextField();
-        maturityField.setPromptText("Enter maturity");
-        maturityField.setMaxWidth(200);
 
         DerivativeState.Asian asianState;
 
@@ -273,21 +296,12 @@ public class UIConfig extends Application {
             asianState = (DerivativeState.Asian) derivativeState.get();
         }
 
-        strikeField.textProperty().addListener(((_, _, val) -> {
-            asianState.strike.set(val);
-        }));
+        GridPane form = createConfigForm();
 
-        maturityField.textProperty().addListener(((_, _, val) -> {
-            asianState.maturity.set(val);
-        }));
+        form.addRow(0, new Label("Strike price"), createConfigField(asianState.strike));
+        form.addRow(1, new Label("Maturity"), createConfigField(asianState.maturity));
 
-
-
-        return new VBox(8,
-                new Label("Asian option" + (barrier ? " (underlying)" : "")),
-                strikeField,
-                maturityField
-        );
+        return new VBox(8, new Label("Asian option" + (barrier ? " (underlying)" : "")), form);
     }
 
     private Node barrierConfigBox() {
@@ -333,26 +347,13 @@ public class UIConfig extends Application {
         Label title = new Label("Simulation configuration");
         title.setStyle("-fx-font-size: 16px;");
 
-        TextField simulationCountField  = new TextField();
-        simulationCountField.setPromptText("Enter simulation count");
-        simulationCountField.setMaxWidth(200);
-        simulationCountField.textProperty().addListener((_, _, val) -> {
-            simulationState.simulationCount.set(val);
-        });
+        GridPane form = createConfigForm();
 
-        TextField timeStepField  = new TextField();
-        timeStepField.setPromptText("Enter time step count");
-        timeStepField.setMaxWidth(200);
-        timeStepField.textProperty().addListener((_, _, val) -> {
-            simulationState.timeStepCount.set(val);
-        });
+        form.addRow(0, new Label("Path count"), createConfigField(simulationState.simulationCount));
+        form.addRow(1, new Label("Time steps"), createConfigField(simulationState.timeStepCount));
 
 
-        VBox config = new VBox(8,
-                title,
-                simulationCountField,
-                timeStepField
-        );
+        VBox config = new VBox(8, title, form);
         config.setPadding(new Insets(10));
         config.setAlignment(Pos.TOP_LEFT);
         return config;
@@ -363,10 +364,19 @@ public class UIConfig extends Application {
         Label title = new Label("Graphs");
         title.setStyle("-fx-font-size: 16px;");
 
+        VBox simulationGraph = new VBox(8, UIGraph.getSimulationPaths(new ArrayList<>()));
+
+        pricerResult.addListener((_, _, val) -> {
+            simulationGraph.getChildren().removeFirst();
+            simulationGraph.getChildren().addAll(UIGraph.getSimulationPaths(val.paths));
+        });
+
 
         VBox graphs = new VBox(8.,
                 title,
-                UIGraph.getSimulationPaths(2, new ArrayList<>()));
+                simulationGraph
+        );
+
 
         graphs.setPadding(new Insets(10));
         graphs.setAlignment(Pos.TOP_LEFT);
@@ -394,7 +404,7 @@ public class UIConfig extends Application {
 
         sp.getDividers().getFirst().positionProperty()
                 .addListener((_, _, _) -> {
-                    double val = 200.0 / sp.getWidth();
+                    double val = 225 / sp.getWidth();
                     sp.setDividerPositions(val);
                 });
 
