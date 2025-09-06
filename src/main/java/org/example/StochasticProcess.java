@@ -21,6 +21,7 @@ public abstract class StochasticProcess {
 
     public List<Double> simulateSteps(int count, double dt, double[] randoms) {
         List<Double> list = new ArrayList<>();
+        list.add(spot);
         for(int i = 0; i < count; i++) {
             list.add(simulateStep(dt, randoms[i]));
         }
