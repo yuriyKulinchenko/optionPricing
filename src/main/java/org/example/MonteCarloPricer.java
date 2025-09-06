@@ -1,6 +1,6 @@
 package org.example;
 
-import org.apache.commons.math3.random.SobolSequenceGenerator;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 import java.util.*;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -14,8 +14,8 @@ public class MonteCarloPricer implements DerivativePricer {
     double rate;
 
     public static class MonteCarloPricerConfig {
-        public static boolean DEBUG = true;
-        public static int BATCH_SIZE = 200;
+        public static final boolean DEBUG = false;
+        public static final int BATCH_SIZE = 200;
     }
 
     public static class Builder implements  BuilderInterface<MonteCarloPricer> {
@@ -66,11 +66,19 @@ public class MonteCarloPricer implements DerivativePricer {
     }
 
     @Override
-    public double getPrice(Derivative derivative, Supplier<StochasticProcess> processSupplier) {
+    public PricerResult getPrice(Derivative derivative, Supplier<StochasticProcess> processSupplier) {
 
         DoubleAdder adder = new DoubleAdder();
         List<List<Double>> samplePricesList = Collections.synchronizedList(new ArrayList<>());
-        Runnable runnable = getRunnable(derivative, processSupplier, adder, samplePricesList);
+        List<List<Vector2D>> samplePathList = Collections.synchronizedList(new ArrayList<>());
+
+        Runnable runnable = getRunnable(
+                derivative,
+                processSupplier,
+                adder,
+                samplePricesList,
+                samplePathList
+        );
 
         double scalingFactor = Math.exp(-rate * derivative.getMaturity());
 
@@ -100,13 +108,14 @@ public class MonteCarloPricer implements DerivativePricer {
             Graph.drawDistribution(samplePrices, 100);
         }
 
-        return (scalingFactor * adder.sum()) / (workerThreads * N);
+        return new PricerResult((scalingFactor * adder.sum()) / (workerThreads * N), samplePathList);
     }
 
     private Runnable getRunnable(Derivative derivative,
                                  Supplier<StochasticProcess> processSupplier,
                                  DoubleAdder adder,
-                                 List<List<Double>> samplePricesList
+                                 List<List<Double>> samplePricesList,
+                                 List<List<Vector2D>> samplePathList
     ) {
 
         double dt = derivative.getMaturity() / steps;
@@ -130,6 +139,15 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 List<Double> path = process.simulateSteps(steps, dt, randoms);
                 process.reset();
+
+                if(i < 3) {
+                    // For now, sample just 3 paths from each thread
+                    List<Vector2D> vectorPath = new ArrayList<>();
+                    for(int j = 0; j < path.size(); j++) {
+                        vectorPath.add(new Vector2D(j * dt, path.get(j)));
+                    }
+                    samplePathList.add(vectorPath);
+                }
 
                 double payoff = derivative.payoff(path);
 

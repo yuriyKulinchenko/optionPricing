@@ -3,7 +3,6 @@ package org.example;
 import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
@@ -14,36 +13,37 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javax.swing.*;
 
-public class HelloFX extends Application {
+import java.util.ArrayList;
 
-    private final ConfigState configState = new ConfigState();
-    private final SimulationState simulationState = new SimulationState();
+public class UIConfig extends Application {
+
+    private final DerivativeConfigState configState = new DerivativeConfigState();
+    private final SimulationConfigState simulationState = new SimulationConfigState();
     private final SimpleObjectProperty<DerivativeState>  derivativeState =
             new SimpleObjectProperty<>(new DerivativeState.European());
 
-    private static class SimulationState {
-        public SimpleStringProperty timeStep;
+    public static class SimulationConfigState {
+        public SimpleStringProperty timeStepCount;
         public SimpleStringProperty simulationCount;
 
-        public SimulationState() {
-            timeStep = new SimpleStringProperty("0.01");
+        public SimulationConfigState() {
+            timeStepCount = new SimpleStringProperty("0.01");
             simulationCount = new SimpleStringProperty("1000");
         }
 
         public StringBinding getBinding() {
             return (StringBinding) Bindings.concat(
-                    "{timeStep: ", timeStep, ", simulationCount: ",  simulationCount, "}");
+                    "{timeStepCount: ", timeStepCount, ", simulationCount: ",  simulationCount, "}");
         }
     }
 
-    private static class ConfigState {
+    public static class DerivativeConfigState {
         public SimpleStringProperty spot;
         public SimpleStringProperty vol;
         public SimpleStringProperty interest;
 
-        public ConfigState() {
+        public DerivativeConfigState() {
             spot = new SimpleStringProperty("100");
             vol = new SimpleStringProperty("0.25");
             interest = new SimpleStringProperty("0.05");
@@ -60,7 +60,7 @@ public class HelloFX extends Application {
         }
     }
 
-    abstract private static class DerivativeState {
+    abstract public static class DerivativeState {
 
         abstract StringBinding getBinding();
 
@@ -341,10 +341,10 @@ public class HelloFX extends Application {
         });
 
         TextField timeStepField  = new TextField();
-        timeStepField.setPromptText("Enter time step");
+        timeStepField.setPromptText("Enter time step count");
         timeStepField.setMaxWidth(200);
         timeStepField.textProperty().addListener((_, _, val) -> {
-            simulationState.timeStep.set(val);
+            simulationState.timeStepCount.set(val);
         });
 
 
@@ -363,27 +363,10 @@ public class HelloFX extends Application {
         Label title = new Label("Graphs");
         title.setStyle("-fx-font-size: 16px;");
 
-        // Temporarily display config state:
-
-        Label derivativeConfig = new Label();
-        derivativeConfig.textProperty().bind(configState.getBinding());
-
-        Label simulationConfig = new Label();
-        simulationConfig.textProperty().bind(simulationState.getBinding());
-
-        Label derivative = new Label();
-        derivative.textProperty().bind(derivativeState.getValue().getBinding());
-        derivativeState.addListener((obs, oldVal, newVal) -> {
-            derivative.textProperty().bind(newVal.getBinding());
-        });
-
 
         VBox graphs = new VBox(8.,
                 title,
-                derivativeConfig,
-                simulationConfig,
-                derivative
-        );
+                UIGraph.getSimulationPaths(2, new ArrayList<>()));
 
         graphs.setPadding(new Insets(10));
         graphs.setAlignment(Pos.TOP_LEFT);
@@ -415,7 +398,7 @@ public class HelloFX extends Application {
                     sp.setDividerPositions(val);
                 });
 
-        Scene scene = new Scene(sp, 1000, 500);
+        Scene scene = new Scene(sp, 1200, 600);
 
 
         stage.setTitle("Option pricer");
