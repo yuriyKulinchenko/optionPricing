@@ -12,33 +12,41 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javax.swing.*;
 
 public class HelloFX extends Application {
 
     private final ConfigState configState = new ConfigState();
+    private final SimulationState simulationState = new SimulationState();
     private final SimpleObjectProperty<DerivativeState>  derivativeState =
             new SimpleObjectProperty<>(new DerivativeState.European());
 
-    private static class ConfigState {
-        public SimpleStringProperty spot = new SimpleStringProperty();
-        public SimpleStringProperty vol = new SimpleStringProperty();
-        public SimpleStringProperty interest = new SimpleStringProperty();
+    private static class SimulationState {
+        public SimpleStringProperty timeStep;
+        public SimpleStringProperty simulationCount;
 
-        public ConfigState() {
-            spot.set("100");
-            vol.set("0.25");
-            interest.set("0.05");
+        public SimulationState() {
+            timeStep = new SimpleStringProperty("0.01");
+            simulationCount = new SimpleStringProperty("1000");
         }
 
-        public ConfigState(double spot, double vol, double interest) {
-            this.spot.set(Double.toString(spot));
-            this.vol.set(Double.toString(vol));
-            this.interest.set(Double.toString(interest));
+        public StringBinding getBinding() {
+            return (StringBinding) Bindings.concat(
+                    "{timeStep: ", timeStep, ", simulationCount: ",  simulationCount, "}");
+        }
+    }
+
+    private static class ConfigState {
+        public SimpleStringProperty spot;
+        public SimpleStringProperty vol;
+        public SimpleStringProperty interest;
+
+        public ConfigState() {
+            spot = new SimpleStringProperty("100");
+            vol = new SimpleStringProperty("0.25");
+            interest = new SimpleStringProperty("0.05");
         }
 
         @Override
@@ -57,20 +65,14 @@ public class HelloFX extends Application {
         abstract StringBinding getBinding();
 
         public static class European extends DerivativeState {
-            public SimpleStringProperty isCall = new SimpleStringProperty();
-            public SimpleStringProperty strike = new SimpleStringProperty();
-            public SimpleStringProperty maturity = new SimpleStringProperty();
+            public SimpleStringProperty isCall;
+            public SimpleStringProperty strike;
+            public SimpleStringProperty maturity;
 
             public European() {
                 this.isCall = new SimpleStringProperty("true");
-                this.strike = new SimpleStringProperty("1.2");
+                this.strike = new SimpleStringProperty("120");
                 this.maturity = new SimpleStringProperty("1");
-            }
-
-            public European(boolean isCall, double strike, double maturity) {
-                this.isCall.set(Boolean.toString(isCall));
-                this.strike.set(Double.toString(strike));
-                this.maturity.set(Double.toString(maturity));
             }
 
             public StringBinding getBinding() {
@@ -80,29 +82,19 @@ public class HelloFX extends Application {
 
             @Override
             public String toString() {
-                return "European{" +
-                        "isCall=" + isCall +
-                        ", strike=" + strike +
-                        ", maturity=" + maturity +
-                        '}';
+                return "European{isCall: " + isCall + ", strike: " + strike + ", maturity: " +  maturity + "}";
             }
         }
 
         public static class Asian extends DerivativeState {
-            public SimpleStringProperty isCall = new SimpleStringProperty();
-            public SimpleStringProperty strike = new SimpleStringProperty();
-            public SimpleStringProperty maturity = new SimpleStringProperty();
+            public SimpleStringProperty isCall;
+            public SimpleStringProperty strike;
+            public SimpleStringProperty maturity;
 
             public Asian() {
                 this.isCall = new SimpleStringProperty("true");
-                this.strike = new SimpleStringProperty("1.2");
+                this.strike = new SimpleStringProperty("120");
                 this.maturity = new SimpleStringProperty("1");
-            }
-
-            public Asian(boolean isCall, double strike, double maturity) {
-                this.isCall.set(Boolean.toString(isCall));
-                this.strike.set(Double.toString(strike));
-                this.maturity.set(Double.toString(maturity));
             }
 
             public StringBinding getBinding() {
@@ -112,18 +104,35 @@ public class HelloFX extends Application {
 
             @Override
             public String toString() {
-                return "Asian{" +
-                        "isCall=" + isCall +
-                        ", strike=" + strike +
-                        ", maturity=" + maturity +
-                        '}';
+                return "Asian{isCall: " + isCall + ", strike: " + strike + ", maturity: " +  maturity + "}";
+            }
+        }
+
+        public static class Barrier extends DerivativeState {
+            public SimpleStringProperty barrier;
+            public SimpleObjectProperty<DerivativeState> underlying;
+
+            public Barrier() {
+                this.barrier = new SimpleStringProperty("120");
+                this.underlying = new SimpleObjectProperty<>(new European());
+            }
+
+            public StringBinding getBinding() {
+                return (StringBinding) Bindings.concat(
+                        // Slightly problematic: underlying.get().getBinding() does not update
+                        "Barrier{underlying: ", underlying.get().getBinding(), ", barrier: ", barrier, "}");
+            }
+
+            @Override
+            public String toString() {
+                return "Barrier{underlying: " + underlying + ", barrier: " + barrier + "}";
             }
         }
     }
 
     private Node configBox() {
 
-        Label title = new Label("Configuration");
+        Label title = new Label("Derivative configuration");
         title.setStyle("-fx-font-size: 16px;");
 
         TextField spotField = new TextField();
@@ -173,7 +182,10 @@ public class HelloFX extends Application {
                     yield asianConfigBox(false);
                 }
 
-                case "Barrier" -> barrierConfigBox();
+                case "Barrier" -> {
+                    derivativeState.set(new DerivativeState.Barrier());
+                    yield barrierConfigBox();
+                }
                 default -> throw new IllegalStateException("Unexpected value: " + selected);
             });
         });
@@ -213,17 +225,27 @@ public class HelloFX extends Application {
         maturityField.setPromptText("Enter maturity");
         maturityField.setMaxWidth(200);
 
-        if(barrier) {
-            // Nothing for now
-        } else {
-            strikeField.textProperty().addListener(((obs, oldVal, newVal) -> {
-                ((DerivativeState.European) derivativeState.get()).strike.set(newVal);
-            }));
+        DerivativeState.European europeanState;
 
-            maturityField.textProperty().addListener(((obs, oldVal, newVal) -> {
-                ((DerivativeState.European) derivativeState.get()).maturity.set(newVal);
-            }));
+        if(barrier) {
+            DerivativeState.Barrier barrierState = (DerivativeState.Barrier) derivativeState.get();
+            barrierState.underlying.set(new DerivativeState.European());
+            europeanState = (DerivativeState.European) barrierState.underlying.get();
+        } else {
+            europeanState = (DerivativeState.European) derivativeState.get();
         }
+
+        strikeField.textProperty().addListener(((_, _, val) -> {
+            europeanState.strike.set(val);
+            System.out.println(val);
+        }));
+
+        maturityField.textProperty().addListener(((_, _, val) -> {
+            europeanState.maturity.set(val);
+            System.out.println(val);
+        }));
+
+
 
         return new VBox(8,
                 new Label("European option" + (barrier ? " (underlying)" : "")),
@@ -241,17 +263,25 @@ public class HelloFX extends Application {
         maturityField.setPromptText("Enter maturity");
         maturityField.setMaxWidth(200);
 
-        if(barrier) {
-            // Nothing for now
-        } else {
-            strikeField.textProperty().addListener(((obs, oldVal, newVal) -> {
-                ((DerivativeState.Asian) derivativeState.get()).strike.set(newVal);
-            }));
+        DerivativeState.Asian asianState;
 
-            maturityField.textProperty().addListener(((obs, oldVal, newVal) -> {
-                ((DerivativeState.Asian) derivativeState.get()).maturity.set(newVal);
-            }));
+        if(barrier) {
+            DerivativeState.Barrier barrierState = (DerivativeState.Barrier) derivativeState.get();
+            barrierState.underlying.set(new DerivativeState.Asian());
+            asianState = (DerivativeState.Asian) barrierState.underlying.get();
+        } else {
+            asianState = (DerivativeState.Asian) derivativeState.get();
         }
+
+        strikeField.textProperty().addListener(((_, _, val) -> {
+            asianState.strike.set(val);
+        }));
+
+        maturityField.textProperty().addListener(((_, _, val) -> {
+            asianState.maturity.set(val);
+        }));
+
+
 
         return new VBox(8,
                 new Label("Asian option" + (barrier ? " (underlying)" : "")),
@@ -264,6 +294,10 @@ public class HelloFX extends Application {
         TextField barrierField = new TextField();
         barrierField.setPromptText("Enter barrier price");
         barrierField.setMaxWidth(200);
+
+        barrierField.textProperty().addListener((_, _, val) -> {
+            ((DerivativeState.Barrier) derivativeState.get()).barrier.set(val);
+        });
 
         StackPane derivativeConfig = new StackPane();
         derivativeConfig.getChildren().add(europeanConfigBox(true));
@@ -295,6 +329,35 @@ public class HelloFX extends Application {
                 );
     }
 
+    private Node simulationConfigBox() {
+        Label title = new Label("Simulation configuration");
+        title.setStyle("-fx-font-size: 16px;");
+
+        TextField simulationCountField  = new TextField();
+        simulationCountField.setPromptText("Enter simulation count");
+        simulationCountField.setMaxWidth(200);
+        simulationCountField.textProperty().addListener((_, _, val) -> {
+            simulationState.simulationCount.set(val);
+        });
+
+        TextField timeStepField  = new TextField();
+        timeStepField.setPromptText("Enter time step");
+        timeStepField.setMaxWidth(200);
+        timeStepField.textProperty().addListener((_, _, val) -> {
+            simulationState.timeStep.set(val);
+        });
+
+
+        VBox config = new VBox(8,
+                title,
+                simulationCountField,
+                timeStepField
+        );
+        config.setPadding(new Insets(10));
+        config.setAlignment(Pos.TOP_LEFT);
+        return config;
+    }
+
     private Node graphBox() {
 
         Label title = new Label("Graphs");
@@ -302,8 +365,11 @@ public class HelloFX extends Application {
 
         // Temporarily display config state:
 
-        Label config = new Label();
-        config.textProperty().bind(configState.getBinding());
+        Label derivativeConfig = new Label();
+        derivativeConfig.textProperty().bind(configState.getBinding());
+
+        Label simulationConfig = new Label();
+        simulationConfig.textProperty().bind(simulationState.getBinding());
 
         Label derivative = new Label();
         derivative.textProperty().bind(derivativeState.getValue().getBinding());
@@ -314,7 +380,8 @@ public class HelloFX extends Application {
 
         VBox graphs = new VBox(8.,
                 title,
-                config,
+                derivativeConfig,
+                simulationConfig,
                 derivative
         );
 
@@ -333,7 +400,11 @@ public class HelloFX extends Application {
     @Override
     public void start(Stage stage) {
 
-        Node config = configBox();
+        Node derivativeConfig = configBox();
+        Node simulationConfig = simulationConfigBox();
+
+        Node config = new VBox(8, simulationConfig, derivativeConfig);
+
         Node graph = graphBox();
 
         SplitPane sp = new SplitPane(config, graph);
