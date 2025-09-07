@@ -1,8 +1,6 @@
 package org.example;
 
 import javafx.application.Application;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.HPos;
@@ -15,7 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class UIConfig extends Application {
@@ -35,13 +32,8 @@ public class UIConfig extends Application {
 
         public SimulationConfigState() {
             timeStepCount = new SimpleStringProperty("100");
-            simulationCount = new SimpleStringProperty("1000");
+            simulationCount = new SimpleStringProperty("10000");
             simulationType = new SimpleStringProperty("Geometric Brownian motion");
-        }
-
-        public StringBinding getBinding() {
-            return (StringBinding) Bindings.concat(
-                    "{timeStepCount: ", timeStepCount, ", simulationCount: ",  simulationCount, "}");
         }
     }
 
@@ -55,21 +47,9 @@ public class UIConfig extends Application {
             vol = new SimpleStringProperty("0.25");
             interest = new SimpleStringProperty("0.05");
         }
-
-        @Override
-        public String toString() {
-            return "{spot: " + spot + ", vol: " + vol + ", interest: " + interest + "}";
-        }
-
-        public StringBinding getBinding() {
-            return (StringBinding) Bindings.concat(
-                    "{spot: ", spot, ", vol: ",  vol, ", interest: ",  interest, "}");
-        }
     }
 
     abstract public static class DerivativeState {
-
-        abstract StringBinding getBinding();
 
         public static class European extends DerivativeState {
             public SimpleStringProperty isCall;
@@ -81,37 +61,21 @@ public class UIConfig extends Application {
                 this.strike = new SimpleStringProperty("120");
                 this.maturity = new SimpleStringProperty("1");
             }
-
-            public StringBinding getBinding() {
-                return (StringBinding) Bindings.concat(
-                        "European{isCall: ", isCall, ", strike: ", strike, ", maturity: ",  maturity, "}");
-            }
-
-            @Override
-            public String toString() {
-                return "European{isCall: " + isCall + ", strike: " + strike + ", maturity: " +  maturity + "}";
-            }
         }
 
         public static class Asian extends DerivativeState {
             public SimpleStringProperty isCall;
             public SimpleStringProperty strike;
             public SimpleStringProperty maturity;
+            public SimpleStringProperty averagingType;
+            public SimpleStringProperty averagingFrequency;
 
             public Asian() {
                 this.isCall = new SimpleStringProperty("true");
                 this.strike = new SimpleStringProperty("120");
                 this.maturity = new SimpleStringProperty("1");
-            }
-
-            public StringBinding getBinding() {
-                return (StringBinding) Bindings.concat(
-                        "Asian{isCall: ", isCall, ", strike: ", strike, ", maturity: ",  maturity, "}");
-            }
-
-            @Override
-            public String toString() {
-                return "Asian{isCall: " + isCall + ", strike: " + strike + ", maturity: " +  maturity + "}";
+                this.averagingType = new SimpleStringProperty("Arithmetic");
+                this.averagingFrequency = new SimpleStringProperty("Continuous");
             }
         }
 
@@ -123,17 +87,6 @@ public class UIConfig extends Application {
                 this.barrier = new SimpleStringProperty("120");
                 this.underlying = new SimpleObjectProperty<>(new European());
             }
-
-            public StringBinding getBinding() {
-                return (StringBinding) Bindings.concat(
-                        // Slightly problematic: underlying.get().getBinding() does not update
-                        "Barrier{underlying: ", underlying.get().getBinding(), ", barrier: ", barrier, "}");
-            }
-
-            @Override
-            public String toString() {
-                return "Barrier{underlying: " + underlying + ", barrier: " + barrier + "}";
-            }
         }
     }
 
@@ -143,6 +96,14 @@ public class UIConfig extends Application {
         field.setText(property.get());
         field.textProperty().addListener((_, _, val) -> property.set(val));
         return field;
+    }
+
+    private ComboBox<String> createComboBox(String... strings) {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll(strings);
+        box.setValue(strings[0]);
+        box.setMaxWidth(200);
+        return box;
     }
 
     private GridPane createConfigForm() {
@@ -177,12 +138,7 @@ public class UIConfig extends Application {
         derivativeConfig.getChildren().add(europeanConfigBox(false));
         derivativeConfig.setMaxWidth(200);
 
-        ComboBox<String> optionSelector = new ComboBox<>();
-        optionSelector.setPromptText("Select option type");
-        optionSelector.getItems().addAll("European", "Asian", "Barrier");
-        optionSelector.setValue("European");
-        optionSelector.setMaxWidth(200);
-
+        ComboBox<String> optionSelector = createComboBox("European", "Asian", "Barrier");
 
         optionSelector.setOnAction(e -> {
             String selected = optionSelector.getValue();
@@ -217,6 +173,7 @@ public class UIConfig extends Application {
         VBox config = new VBox(8.,
                 title,
                 form,
+                new Label("Derivative type:"),
                 optionSelector,
                 getSeparator(Orientation.HORIZONTAL),
                 derivativeConfig,
@@ -304,8 +261,7 @@ public class UIConfig extends Application {
         form.addRow(0, new Label("Strike price"), createConfigField(europeanState.strike));
         form.addRow(1, new Label("Maturity"), createConfigField(europeanState.maturity));
 
-        return new VBox(8,
-                new Label("European option" + (barrier ? " (underlying)" : "")), form);
+        return new VBox(8, form);
     }
 
     private Node asianConfigBox(boolean barrier) {
@@ -325,7 +281,29 @@ public class UIConfig extends Application {
         form.addRow(0, new Label("Strike price"), createConfigField(asianState.strike));
         form.addRow(1, new Label("Maturity"), createConfigField(asianState.maturity));
 
-        return new VBox(8, new Label("Asian option" + (barrier ? " (underlying)" : "")), form);
+        ComboBox<String> averagingTypeSelector = createComboBox("Arithmetic", "Geometric");
+
+        averagingTypeSelector.setOnAction(e -> {
+            String selected = averagingTypeSelector.getValue();
+            ((DerivativeState.Asian) derivativeState.get()).averagingType.set(selected);
+        });
+
+        ComboBox<String> averagingFrequencySelector = createComboBox("Continuous", "Weekly", "Monthly");
+
+        averagingTypeSelector.setOnAction(e -> {
+            String selected = averagingFrequencySelector.getValue();
+            ((DerivativeState.Asian) derivativeState.get()).averagingFrequency.set(selected);
+        });
+
+
+
+        return new VBox(8,
+                form,
+                new Label("Averaging type:"),
+                averagingTypeSelector,
+                new Label("Averaging frequency:"),
+                averagingFrequencySelector
+        );
     }
 
     private Node barrierConfigBox() {
@@ -333,15 +311,12 @@ public class UIConfig extends Application {
         GridPane form = createConfigForm();
         form.addRow(0, new Label("Barrier price"), createConfigField(barrierState.barrier));
 
+        ComboBox<String> typeSelector = createComboBox("Up-and-In", "Up-and-Out", "Down-and-in", "Down-and-out");
 
         StackPane derivativeConfig = new StackPane();
         derivativeConfig.getChildren().add(europeanConfigBox(true));
 
-        ComboBox<String> optionSelector = new ComboBox<>();
-        optionSelector.setPromptText("Select option type");
-        optionSelector.getItems().addAll("European", "Asian");
-        optionSelector.setValue("European");
-        optionSelector.setMaxWidth(200);
+        ComboBox<String> optionSelector = createComboBox("European", "Asian");
 
         optionSelector.setOnAction(e -> {
             String selected = optionSelector.getValue();
@@ -356,8 +331,10 @@ public class UIConfig extends Application {
         separator.setOrientation(Orientation.HORIZONTAL);
 
         return new VBox(8,
-                new Label("Barrier option"),
                 form,
+                new Label("Barrier type:"),
+                typeSelector,
+                new Label("Underlying option:"),
                 optionSelector,
                 separator,
                 derivativeConfig
@@ -370,11 +347,7 @@ public class UIConfig extends Application {
 
         GridPane form = createConfigForm();
 
-        ComboBox<String> optionSelector = new ComboBox<>();
-        optionSelector.setPromptText("Select simulation type");
-        optionSelector.getItems().addAll("Geometric Brownian motion", "Jump diffusion");
-        optionSelector.setValue("Geometric Brownian motion");
-        optionSelector.setMaxWidth(200);
+        ComboBox<String> optionSelector = createComboBox("Geometric Brownian motion", "Jump diffusion");
 
         optionSelector.setOnAction(e -> {
             String selected = optionSelector.getValue();
@@ -455,7 +428,7 @@ public class UIConfig extends Application {
                     sp.setDividerPositions(val);
                 });
 
-        Scene scene = new Scene(sp, 1200, 600);
+        Scene scene = new Scene(sp, 1200, 800);
 
 
         stage.setTitle("Option pricer");
