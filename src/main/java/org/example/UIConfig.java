@@ -31,10 +31,12 @@ public class UIConfig extends Application {
     public static class SimulationConfigState {
         public SimpleStringProperty timeStepCount;
         public SimpleStringProperty simulationCount;
+        public SimpleStringProperty simulationType;
 
         public SimulationConfigState() {
             timeStepCount = new SimpleStringProperty("100");
             simulationCount = new SimpleStringProperty("1000");
+            simulationType = new SimpleStringProperty("Geometric Brownian motion");
         }
 
         public StringBinding getBinding() {
@@ -207,44 +209,7 @@ public class UIConfig extends Application {
         Button btn = new Button("Calculate option price");
 
         btn.setOnAction(e -> {
-
-            // Parse config state:
-
-            double spot = Double.parseDouble(configState.spot.get());
-            double interest = Double.parseDouble(configState.interest.get());
-            double vol = Double.parseDouble(configState.vol.get());
-
-            Supplier<StochasticProcess> supplier = () -> new GeometricBrownianMotion(spot, interest, vol);
-
-            // Parse simulation state:
-
-            int simulationCount = Integer.parseInt(simulationState.simulationCount.get());
-            int stepCount = Integer.parseInt(simulationState.timeStepCount.get());
-
-            DerivativePricer pricer = new MonteCarloPricer.Builder()
-                    .setIterationCount(simulationCount)
-                    .setSteps(stepCount)
-                    .setRate(interest)
-                    .build();
-
-            // Parse derivative:
-
-            Derivative derivative = null;
-
-            DerivativeState state = derivativeState.get();
-
-            if(state instanceof DerivativeState.European european) {
-                double strike = Double.parseDouble(european.strike.get());
-                double maturity = Double.parseDouble(european.maturity.get());
-                derivative = new EuropeanCall(strike, maturity);
-            } else if(state instanceof DerivativeState.Asian asian) {
-                double strike = Double.parseDouble(asian.strike.get());
-                double maturity = Double.parseDouble(asian.maturity.get());
-                derivative = new AsianCall(strike, maturity);
-            } else if(state instanceof DerivativeState.Barrier barrier) {
-                // No handling for now
-            }
-            pricerResult.set(pricer.getPrice(derivative, supplier));
+            setPricerResult();
         });
 
         btn.setMaxWidth(200);
@@ -262,6 +227,64 @@ public class UIConfig extends Application {
         config.setPadding(new Insets(10));
         config.setAlignment(Pos.TOP_LEFT);
         return config;
+    }
+
+    private void setPricerResult() {
+        // Parse config state:
+
+        double spot = Double.parseDouble(configState.spot.get());
+        double interest = Double.parseDouble(configState.interest.get());
+        double vol = Double.parseDouble(configState.vol.get());
+
+        // Parse simulation state:
+
+        int simulationCount = Integer.parseInt(simulationState.simulationCount.get());
+        int stepCount = Integer.parseInt(simulationState.timeStepCount.get());
+        String simulationType = simulationState.simulationType.get();
+
+        DerivativePricer pricer = new MonteCarloPricer.Builder()
+                .setIterationCount(simulationCount)
+                .setSteps(stepCount)
+                .setRate(interest)
+                .build();
+
+        // Parse derivative:
+
+        Supplier<StochasticProcess> supplier = switch (simulationType) {
+            case "Geometric Brownian motion" -> () -> new GeometricBrownianMotion(spot, interest, vol);
+            case "Jump diffusion" -> () -> new JumpDiffusion(spot, interest, vol);
+            default -> null;
+        };
+
+        Derivative derivative = getDerivative(derivativeState.get());
+        pricerResult.set(pricer.getPrice(derivative, supplier));
+    }
+
+    private Derivative getDerivative(DerivativeState state) {
+
+        Derivative derivative = null;
+
+        if(state instanceof DerivativeState.European european) {
+
+            double strike = Double.parseDouble(european.strike.get());
+            double maturity = Double.parseDouble(european.maturity.get());
+            derivative = new EuropeanCall(strike, maturity);
+
+        } else if(state instanceof DerivativeState.Asian asian) {
+
+            double strike = Double.parseDouble(asian.strike.get());
+            double maturity = Double.parseDouble(asian.maturity.get());
+            derivative = new AsianCall(strike, maturity);
+
+        } else if(state instanceof DerivativeState.Barrier barrier) {
+
+            double barrierPrice = Double.parseDouble(barrier.barrier.get());
+            Derivative underlying = getDerivative(barrier.underlying.get());
+            derivative = new Barrier(underlying, barrierPrice, true); // Tweak configuration settings
+
+        }
+
+        return derivative;
     }
 
     private Node europeanConfigBox(boolean barrier) {
@@ -306,13 +329,10 @@ public class UIConfig extends Application {
     }
 
     private Node barrierConfigBox() {
-        TextField barrierField = new TextField();
-        barrierField.setPromptText("Enter barrier price");
-        barrierField.setMaxWidth(200);
+        DerivativeState.Barrier barrierState = (DerivativeState.Barrier) derivativeState.get();
+        GridPane form = createConfigForm();
+        form.addRow(0, new Label("Barrier price"), createConfigField(barrierState.barrier));
 
-        barrierField.textProperty().addListener((_, _, val) -> {
-            ((DerivativeState.Barrier) derivativeState.get()).barrier.set(val);
-        });
 
         StackPane derivativeConfig = new StackPane();
         derivativeConfig.getChildren().add(europeanConfigBox(true));
@@ -337,7 +357,7 @@ public class UIConfig extends Application {
 
         return new VBox(8,
                 new Label("Barrier option"),
-                barrierField,
+                form,
                 optionSelector,
                 separator,
                 derivativeConfig
@@ -350,11 +370,23 @@ public class UIConfig extends Application {
 
         GridPane form = createConfigForm();
 
+        ComboBox<String> optionSelector = new ComboBox<>();
+        optionSelector.setPromptText("Select simulation type");
+        optionSelector.getItems().addAll("Geometric Brownian motion", "Jump diffusion");
+        optionSelector.setValue("Geometric Brownian motion");
+        optionSelector.setMaxWidth(200);
+
+        optionSelector.setOnAction(e -> {
+            String selected = optionSelector.getValue();
+            simulationState.simulationType.set(selected);
+        });
+
+
         form.addRow(0, new Label("Path count"), createConfigField(simulationState.simulationCount));
         form.addRow(1, new Label("Time steps"), createConfigField(simulationState.timeStepCount));
 
 
-        VBox config = new VBox(8, title, form);
+        VBox config = new VBox(8, title, optionSelector, form);
         config.setPadding(new Insets(10));
         config.setAlignment(Pos.TOP_LEFT);
         return config;
