@@ -6,7 +6,7 @@ public abstract class Option implements Derivative {
 
     public Type type;
 
-    public static enum Type {
+    public enum Type {
         CALL,
         PUT
     }

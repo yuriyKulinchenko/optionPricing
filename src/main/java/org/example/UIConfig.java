@@ -238,6 +238,7 @@ public class UIConfig extends Application {
                 case "Geometric" -> AsianOption.AveragingType.GEOMETRIC;
                 default -> null;
             };
+
             derivative = new AsianOption(Option.Type.CALL, strike, maturity, averagingType);
 
         } else if(state instanceof DerivativeState.Barrier barrier) {
@@ -305,7 +306,7 @@ public class UIConfig extends Application {
 
         ComboBox<String> averagingFrequencySelector = createComboBox("Continuous", "Weekly", "Monthly");
 
-        averagingTypeSelector.setOnAction(e -> {
+        averagingFrequencySelector.setOnAction(e -> {
             String selected = averagingFrequencySelector.getValue();
             ((DerivativeState.Asian) derivativeState.get()).averagingFrequency.set(selected);
         });
