@@ -9,21 +9,25 @@ public class Barrier implements Derivative {
     private final Derivative derivative;
     private final double barrier;
     private final boolean knockIn;
+    private final boolean isUp;
 
-    private boolean isUp;
+    public enum Type {
+        UP_IN,
+        UP_OUT,
+        DOWN_IN,
+        DOWN_OUT
+    }
 
-    public Barrier(Derivative derivative, double barrier, boolean knockIn) {
+    public Barrier(Derivative derivative, double barrier, Type type) {
         this.derivative = derivative;
         this.barrier = barrier;
-        this.knockIn = knockIn;
+        this.knockIn = (type == Type.UP_IN) || (type == Type.DOWN_IN);
+        this.isUp = (type == Type.UP_IN) || (type == Type.UP_OUT);
     }
 
     @Override
     public double payoff(List<Double> path) {
-        isUp = path.getFirst() < barrier;
-
-        boolean breached = breachedBarrier(path.getFirst()) || breachedBarrier(path.getLast());
-        if(!breached) breached = breachedBarrier(path);
+        boolean breached = breachedBarrier(path);
 
         boolean exists = knockIn && breached || !knockIn && !breached;
         return exists ? derivative.payoff(path) : 0;
@@ -50,10 +54,5 @@ public class Barrier implements Derivative {
     @Override
     public double getMaturity() {
         return derivative.getMaturity();
-    }
-
-    @Override
-    public void addChart(XYChart chart) {
-        // TODO: Implement chart
     }
 }

@@ -81,10 +81,12 @@ public class UIConfig extends Application {
 
         public static class Barrier extends DerivativeState {
             public SimpleStringProperty barrier;
+            public SimpleStringProperty barrierType;
             public SimpleObjectProperty<DerivativeState> underlying;
 
             public Barrier() {
                 this.barrier = new SimpleStringProperty("120");
+                this.barrierType = new SimpleStringProperty("Up-and-In");
                 this.underlying = new SimpleObjectProperty<>(new European());
             }
         }
@@ -225,19 +227,32 @@ public class UIConfig extends Application {
 
             double strike = Double.parseDouble(european.strike.get());
             double maturity = Double.parseDouble(european.maturity.get());
-            derivative = new EuropeanCall(strike, maturity);
+            derivative = new EuropeanOption(Option.Type.CALL, strike, maturity);
 
         } else if(state instanceof DerivativeState.Asian asian) {
 
             double strike = Double.parseDouble(asian.strike.get());
             double maturity = Double.parseDouble(asian.maturity.get());
-            derivative = new AsianCall(strike, maturity);
+            AsianOption.AveragingType averagingType = switch (asian.averagingType.get()) {
+                case "Arithmetic" -> AsianOption.AveragingType.ARITHMETIC;
+                case "Geometric" -> AsianOption.AveragingType.GEOMETRIC;
+                default -> null;
+            };
+            derivative = new AsianOption(Option.Type.CALL, strike, maturity, averagingType);
 
         } else if(state instanceof DerivativeState.Barrier barrier) {
 
             double barrierPrice = Double.parseDouble(barrier.barrier.get());
+            Barrier.Type barrierType = switch (barrier.barrierType.get()) {
+                case "Up-and-In" -> Barrier.Type.UP_IN;
+                case "Up-and-Out" -> Barrier.Type.UP_OUT;
+                case "Down-and-In" -> Barrier.Type.DOWN_IN;
+                case "Down-and-Out" -> Barrier.Type.DOWN_OUT;
+                default -> null;
+            };
+
             Derivative underlying = getDerivative(barrier.underlying.get());
-            derivative = new Barrier(underlying, barrierPrice, true); // Tweak configuration settings
+            derivative = new Barrier(underlying, barrierPrice, barrierType); // Tweak configuration settings
 
         }
 
@@ -311,7 +326,15 @@ public class UIConfig extends Application {
         GridPane form = createConfigForm();
         form.addRow(0, new Label("Barrier price"), createConfigField(barrierState.barrier));
 
-        ComboBox<String> typeSelector = createComboBox("Up-and-In", "Up-and-Out", "Down-and-in", "Down-and-out");
+        ComboBox<String> typeSelector = createComboBox(
+                "Up-and-In", "Up-and-Out",
+                "Down-and-In", "Down-and-Out"
+        );
+
+        typeSelector.setOnAction(e -> {
+            String selected = typeSelector.getValue();
+            ((DerivativeState.Barrier)derivativeState.get()).barrierType.set(selected);
+        });
 
         StackPane derivativeConfig = new StackPane();
         derivativeConfig.getChildren().add(europeanConfigBox(true));

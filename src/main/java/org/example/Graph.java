@@ -51,10 +51,6 @@ public class Graph {
         addSeries("Asset " + plotCount, xList, yList);
     }
 
-    public void addDerivative(Derivative derivative) {
-        derivative.addChart(chart);
-    }
-
     public void draw() {
         new SwingWrapper<>(chart).displayChart();
     }
