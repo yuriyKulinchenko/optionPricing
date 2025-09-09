@@ -1,10 +1,12 @@
 package org.example;
 
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import javafx.scene.chart.XYChart;
 
+import java.awt.*;
 import java.util.List;
 
 public class UIGraph {
@@ -60,6 +62,29 @@ public class UIGraph {
                 .stream()
                 .map(v -> new XYChart.Data<Number, Number>(v.getX(), v.getY()))
                 .toList());
+
+        UIGraph.simulationChart.getData().add(series);
+    }
+
+    private static void addDerivative(Derivative derivative) {
+
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+
+        if(derivative instanceof AsianOption option) {
+            XYChart.Data<Number, Number> v0 = new XYChart.Data<>(0, option.strikePrice);
+            XYChart.Data<Number, Number> v1 = new XYChart.Data<>(option.maturity, option.strikePrice);
+            series.getData().addAll(v0, v1);
+        } else if(derivative instanceof EuropeanOption option) {
+            XYChart.Data<Number, Number> v0 = new XYChart.Data<>(0, option.strikePrice);
+            XYChart.Data<Number, Number> v1 = new XYChart.Data<>(option.maturity, option.strikePrice);
+            series.getData().addAll(v0, v1);
+        } else if(derivative instanceof Barrier barrier) {
+            Derivative underlying = barrier.derivative;
+            addDerivative(underlying);
+            XYChart.Data<Number, Number> v0 = new XYChart.Data<>(0, barrier.barrier);
+            XYChart.Data<Number, Number> v1 = new XYChart.Data<>(underlying.getMaturity(), barrier.barrier);
+            series.getData().addAll(v0, v1);
+        }
 
         UIGraph.simulationChart.getData().add(series);
     }

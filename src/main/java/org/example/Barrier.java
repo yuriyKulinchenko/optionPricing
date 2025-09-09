@@ -6,10 +6,10 @@ import java.util.List;
 
 public class Barrier implements Derivative {
 
-    private final Derivative derivative;
-    private final double barrier;
-    private final boolean knockIn;
-    private final boolean isUp;
+    public final Derivative derivative;
+    public final double barrier;
+    public final boolean knockIn;
+    public final boolean isUp;
 
     public enum Type {
         UP_IN,

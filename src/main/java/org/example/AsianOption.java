@@ -45,8 +45,6 @@ public class AsianOption extends Option {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
                 arithmeticAverage(path) : geometricAverage(path);
 
-        System.out.println(geometricAverage(path));
-
         return Math.max(avg - strikePrice, 0);
     }
 
