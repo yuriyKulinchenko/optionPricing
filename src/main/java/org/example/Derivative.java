@@ -32,7 +32,6 @@ public abstract class Derivative {
         
         double delta = adjointList[0];
 
-        System.out.println(delta);
         return new DerivativePrice(rawPayoff(process), delta);
     }
 }

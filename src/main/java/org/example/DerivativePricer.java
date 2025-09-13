@@ -10,6 +10,7 @@ public interface DerivativePricer {
     class PricerResult {
 
         public double derivativePrice;
+        public double delta;
         public List<List<Vector2D>> paths;
 
         public List<Double> sums;
@@ -19,6 +20,7 @@ public interface DerivativePricer {
 
         public PricerResult(
                 double derivativePrice,
+                double delta,
                 List<List<Vector2D>> paths,
                 List<Double> sums,
                 List<Double> squares,
@@ -26,6 +28,7 @@ public interface DerivativePricer {
 
         ) {
             this.derivativePrice = derivativePrice;
+            this.delta = delta;
             this.paths = paths;
             this.sums = sums;
             this.squares = squares;

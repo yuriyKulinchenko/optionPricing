@@ -400,12 +400,15 @@ public class UIConfig extends Application {
         );
 
         Label estimatedPriceLabel = new Label("Estimated price: 0.00");
-        VBox results = new VBox(8, estimatedPriceLabel);
+        Label deltaLabel = new Label("Estimated delta: 0.00");
+
+        VBox results = new VBox(8, estimatedPriceLabel, deltaLabel);
 
         pricerResult.addListener((_, _, val) -> {
             UIGraph.populateSimulationChart(val.paths);
             UIGraph.populateVarianceChart(val.sums, val.squares, val.chunkSize);
             estimatedPriceLabel.textProperty().set("Estimated price: " + val.derivativePrice);
+            deltaLabel.textProperty().set("Estimated delta: " + val.delta);
         });
 
 
