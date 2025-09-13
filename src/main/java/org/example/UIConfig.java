@@ -399,16 +399,25 @@ public class UIConfig extends Application {
                 UIGraph.varianceChart
         );
 
-        Label estimatedPriceLabel = new Label("Estimated price: 0.00");
-        Label deltaLabel = new Label("Estimated delta: 0.00");
+        Label estimatedPriceLabel = new Label("Estimated price: 0.000");
+        Label deltaLabel = new Label("Estimated delta: 0.000");
+        Label rhoLabel = new Label("Estimated rho: 0.000");
 
-        VBox results = new VBox(8, estimatedPriceLabel, deltaLabel);
+        VBox results = new VBox(8, estimatedPriceLabel, deltaLabel, rhoLabel);
 
         pricerResult.addListener((_, _, val) -> {
             UIGraph.populateSimulationChart(val.paths);
             UIGraph.populateVarianceChart(val.sums, val.squares, val.chunkSize);
-            estimatedPriceLabel.textProperty().set("Estimated price: " + val.derivativePrice);
-            deltaLabel.textProperty().set("Estimated delta: " + val.delta);
+            estimatedPriceLabel.textProperty().set("Estimated price: "
+                    + String.format("%.3f", val.derivativePrice));
+
+            deltaLabel.textProperty().set("Estimated delta: "
+                    + String.format("%.3f", val.delta));
+
+
+            // Change val.rho is multiplied by 0.01 by convention
+            rhoLabel.textProperty().set("Estimated rho: "
+                    + String.format("%.3f", 0.01 * val.rho));
         });
 
 

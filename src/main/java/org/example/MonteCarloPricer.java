@@ -74,6 +74,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
         public final DoubleAdder adder;
         public final DoubleAdder deltaAdder;
+        public final DoubleAdder rhoAdder;
 
         public final List<List<Vector2D>> samplePathList;
         public final List<List<Double>> sumsList;
@@ -82,6 +83,7 @@ public class MonteCarloPricer implements DerivativePricer {
         public MTCData() {
             this.adder = new DoubleAdder();
             this.deltaAdder = new DoubleAdder();
+            this.rhoAdder = new DoubleAdder();
 
             this.samplePathList = Collections.synchronizedList(new ArrayList<>());
             this.sumsList = Collections.synchronizedList(new ArrayList<>());
@@ -121,10 +123,17 @@ public class MonteCarloPricer implements DerivativePricer {
                 .map(x -> discountFactor * discountFactor * x).toList();
 
         double constant = discountFactor / (workerThreads * N);
+        double T = derivative.getMaturity();
+
+        double price = data.adder.sum() * constant;
+        double delta = data.deltaAdder.sum() * constant;
+        double rho = data.rhoAdder.sum() * constant - T * price;
+
 
         return new PricerResult(
-                data.adder.sum() * constant,
-                data.deltaAdder.sum() * constant,
+                price,
+                delta,
+                rho,
                 data.samplePathList,
                 sums,
                 sumSquares,
@@ -154,6 +163,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
             double sum = 0;
             double deltaSum = 0;
+            double rhoSum = 0;
 
             double batchSum = 0;
             double batchSumSquare = 0;
@@ -167,6 +177,7 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 sum += payoff.price;
                 deltaSum += payoff.delta;
+                rhoSum += payoff.rho;
 
                 batchSum += payoff.price;
                 batchSumSquare += payoff.price * payoff.price;
@@ -195,6 +206,7 @@ public class MonteCarloPricer implements DerivativePricer {
             data.sumSquaresList.add(sumSquares);
             data.adder.add(sum);
             data.deltaAdder.add(deltaSum);
+            data.rhoAdder.add(rhoSum);
         };
     }
 }
