@@ -3,6 +3,7 @@ package org.example;
 import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
+import org.apache.commons.math3.exception.OutOfRangeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class JumpDiffusion extends StochasticProcess {
     }
 
     @Override
-    public List<Double> simulateSteps(int count, double dt, double[] randoms) {
+    public void simulateSteps(int count, double dt, double[] randoms) {
         List<Double> list = new ArrayList<>();
         list.add(spot);
 
@@ -42,7 +43,7 @@ public class JumpDiffusion extends StochasticProcess {
             double J = Math.sqrt(N) * sigma_j * normalDistribution.sample() + N * mu_j;
             list.add(simulateStep(dt, randoms[i], J));
         }
-        return list;
+        // TODO: Reimplement
     }
 
     public double simulateStep(double dt, double Z, double jump) {
@@ -54,5 +55,10 @@ public class JumpDiffusion extends StochasticProcess {
     @Override
     public double simulateStep(double dt, double Z)  {
         return 0; // Not required for this
+    }
+
+    @Override
+    public double stepDerivative(int i) throws OutOfRangeException {
+        return 0;
     }
 }

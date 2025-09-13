@@ -18,13 +18,13 @@ public class EuropeanOption extends Option {
     }
 
     @Override
-    double callPayoff(List<Double> path) {
-        return Math.max(path.getLast() - strikePrice, 0);
+    double callPayoff(StochasticProcess process) {
+        return Math.max(process.process[process.process.length - 1] - strikePrice, 0);
     }
 
     @Override
-    double putPayoff(List<Double> path) {
-        return Math.max(strikePrice - path.getLast(), 0);
+    double putPayoff(StochasticProcess process) {
+        return Math.max(strikePrice - process.process[process.process.length - 1], 0);
     }
 
     @Override

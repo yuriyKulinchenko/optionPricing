@@ -26,14 +26,14 @@ public class Barrier implements Derivative {
     }
 
     @Override
-    public double payoff(List<Double> path) {
-        boolean breached = breachedBarrier(path);
+    public double payoff(StochasticProcess process) {
+        boolean breached = breachedBarrier(process.process);
 
         boolean exists = knockIn && breached || !knockIn && !breached;
-        return exists ? derivative.payoff(path) : 0;
+        return exists ? derivative.payoff(process) : 0;
     }
 
-    private boolean breachedBarrier(List<Double> path) {
+    private boolean breachedBarrier(double[] path) {
         for(double x: path) {
             if(breachedBarrier(x)) {
                 return true;

@@ -11,15 +11,15 @@ public abstract class Option implements Derivative {
         PUT
     }
 
-    abstract double callPayoff(List<Double> path);
-    abstract double putPayoff(List<Double> path);
+    abstract double callPayoff(StochasticProcess process);
+    abstract double putPayoff(StochasticProcess process);
 
     @Override
-    public double payoff(List<Double> path) {
+    public double payoff(StochasticProcess process) {
         if(type == Type.CALL) {
-            return callPayoff(path);
+            return callPayoff(process);
         } else {
-            return putPayoff(path);
+            return putPayoff(process);
         }
     }
 }

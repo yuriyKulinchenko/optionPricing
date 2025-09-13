@@ -5,6 +5,6 @@ import org.knowm.xchart.XYChart;
 import java.util.List;
 
 public interface Derivative {
-    double payoff(List<Double> path);
+    double payoff(StochasticProcess process);
     double getMaturity();
 }

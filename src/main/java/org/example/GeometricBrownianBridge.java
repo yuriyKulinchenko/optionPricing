@@ -1,7 +1,6 @@
 package org.example;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class GeometricBrownianBridge extends StochasticProcess {
@@ -15,7 +14,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
     }
 
     @Override
-    public List<Double> simulateSteps(int count, double dt, double[] randoms) {
+    public void simulateSteps(int count, double dt, double[] randoms) {
         this.randoms = randoms;
         this.index = 0;
         this.dt = dt;
@@ -34,7 +33,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
             prices.add(spot * Math.exp(adjustedDrift * t + volatility * process[i]));
         }
 
-        return prices;
+        // Does nothing for now
     }
 
     public void simulateWienerProcess(double[] process, int i, int k) {
@@ -64,5 +63,10 @@ public class GeometricBrownianBridge extends StochasticProcess {
         double adjustedDrift = drift - 0.5 * volatility * volatility;
         current *=  Math.exp(adjustedDrift * dt + volatility * Math.sqrt(dt) * Z);
         return current;
+    }
+
+    @Override
+    public double stepDerivative(int i) {
+        return 0;
     }
 }

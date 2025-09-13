@@ -1,5 +1,7 @@
 package org.example;
 
+import org.apache.commons.math3.exception.OutOfRangeException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,8 @@ public abstract class StochasticProcess {
     public double drift;
     public double volatility;
 
+    public double[] process;
+
     public StochasticProcess(double spot, double drift, double volatility) {
         this.spot = spot;
         this.drift = drift;
@@ -19,13 +23,19 @@ public abstract class StochasticProcess {
 
     public abstract double simulateStep(double dt, double Z);
 
-    public List<Double> simulateSteps(int count, double dt, double[] randoms) {
-        List<Double> list = new ArrayList<>();
-        list.add(spot);
-        for(int i = 0; i < count; i++) {
-            list.add(simulateStep(dt, randoms[i]));
+    // stepDerivative(i) := dS_i/dS_i-1
+    public abstract double stepDerivative(int i);
+
+    public void simulateSteps(int count, double dt, double[] randoms) {
+        if(process == null || process.length != count) {
+            process = new double[count];
         }
-        return list;
+
+        process[0] = spot;
+
+        for(int i = 1; i < count; i++) {
+            process[i] = simulateStep(dt, randoms[i]);
+        }
     }
 
     public void reset() {

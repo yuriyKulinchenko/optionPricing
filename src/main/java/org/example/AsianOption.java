@@ -23,35 +23,35 @@ public class AsianOption extends Option {
         this.type = optionType;
     }
 
-    private double arithmeticAverage(List<Double> path) {
+    private double arithmeticAverage(double[] path) {
         double sum = 0;
         for(double x: path) {
             sum += x;
         }
-        return sum / path.size();
+        return sum / path.length;
     }
 
-    private double geometricAverage(List<Double> path) {
+    private double geometricAverage(double[] path) {
         double sum = 0;
         for(double x: path) {
             sum += Math.log(x);
         }
-        return Math.exp(sum / path.size());
+        return Math.exp(sum / path.length);
     }
 
     @Override
-    public double callPayoff(List<Double> path) {
+    public double callPayoff(StochasticProcess process) {
 
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
-                arithmeticAverage(path) : geometricAverage(path);
+                arithmeticAverage(process.process) : geometricAverage(process.process);
 
         return Math.max(avg - strikePrice, 0);
     }
 
     @Override
-    double putPayoff(List<Double> path) {
+    double putPayoff(StochasticProcess process) {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
-                arithmeticAverage(path) : geometricAverage(path);
+                arithmeticAverage(process.process) : geometricAverage(process.process);
 
         return Math.max(strikePrice - avg, 0);
     }

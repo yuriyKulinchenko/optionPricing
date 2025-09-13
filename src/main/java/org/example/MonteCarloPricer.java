@@ -153,11 +153,8 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 double[] randoms = sobol.nextNormalVector();
 
-                List<Double> path = process.simulateSteps(steps, dt, randoms);
-                process.reset();
-
-
-                double payoff = derivative.payoff(path);
+                process.simulateSteps(steps, dt, randoms);
+                double payoff = derivative.payoff(process);
 
                 sum += payoff;
                 batchSum += payoff;
@@ -167,8 +164,8 @@ public class MonteCarloPricer implements DerivativePricer {
                 if(i < 3) {
                     // For now, sample just 3 paths from each thread
                     List<Vector2D> vectorPath = new ArrayList<>();
-                    for(int j = 0; j < path.size(); j++) {
-                        vectorPath.add(new Vector2D(j * dt, path.get(j)));
+                    for(int j = 0; j < process.process.length; j++) {
+                        vectorPath.add(new Vector2D(j * dt, process.process[j]));
                     }
                     samplePathList.add(vectorPath);
                 }
@@ -179,6 +176,8 @@ public class MonteCarloPricer implements DerivativePricer {
                     batchSumSquare = 0;
                     batchSum = 0;
                 }
+
+                process.reset();
             }
 
             sumsList.add(sums);
