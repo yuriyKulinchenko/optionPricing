@@ -75,6 +75,7 @@ public class MonteCarloPricer implements DerivativePricer {
         public final DoubleAdder adder;
         public final DoubleAdder deltaAdder;
         public final DoubleAdder rhoAdder;
+        public final DoubleAdder thetaAdder;
 
         public final List<List<Vector2D>> samplePathList;
         public final List<List<Double>> sumsList;
@@ -84,6 +85,7 @@ public class MonteCarloPricer implements DerivativePricer {
             this.adder = new DoubleAdder();
             this.deltaAdder = new DoubleAdder();
             this.rhoAdder = new DoubleAdder();
+            this.thetaAdder = new DoubleAdder();
 
             this.samplePathList = Collections.synchronizedList(new ArrayList<>());
             this.sumsList = Collections.synchronizedList(new ArrayList<>());
@@ -128,12 +130,14 @@ public class MonteCarloPricer implements DerivativePricer {
         double price = data.adder.sum() * constant;
         double delta = data.deltaAdder.sum() * constant;
         double rho = data.rhoAdder.sum() * constant - T * price;
+        double theta = data.thetaAdder.sum() * constant - rate * price;
 
 
         return new PricerResult(
                 price,
                 delta,
                 rho,
+                theta,
                 data.samplePathList,
                 sums,
                 sumSquares,
@@ -164,6 +168,7 @@ public class MonteCarloPricer implements DerivativePricer {
             double sum = 0;
             double deltaSum = 0;
             double rhoSum = 0;
+            double thetaSum = 0;
 
             double batchSum = 0;
             double batchSumSquare = 0;
@@ -178,6 +183,7 @@ public class MonteCarloPricer implements DerivativePricer {
                 sum += payoff.price;
                 deltaSum += payoff.delta;
                 rhoSum += payoff.rho;
+                thetaSum += payoff.theta;
 
                 batchSum += payoff.price;
                 batchSumSquare += payoff.price * payoff.price;
@@ -207,6 +213,7 @@ public class MonteCarloPricer implements DerivativePricer {
             data.adder.add(sum);
             data.deltaAdder.add(deltaSum);
             data.rhoAdder.add(rhoSum);
+            data.thetaAdder.add(thetaSum);
         };
     }
 }

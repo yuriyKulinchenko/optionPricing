@@ -1,20 +1,18 @@
 package org.example;
 
-import org.knowm.xchart.XYChart;
-
-import java.util.List;
-
 public abstract class Derivative {
 
     public static class DerivativePrice {
         public double price;
         public double delta;
         public double rho;
+        public double theta;
 
-        public DerivativePrice(double price, double delta, double rho) {
+        public DerivativePrice(double price, double delta, double rho, double theta) {
             this.price = price;
             this.delta = delta;
             this.rho = rho;
+            this.theta = theta;
         }
     }
 
@@ -24,21 +22,30 @@ public abstract class Derivative {
 
     DerivativePrice payoff(StochasticProcess process) {
         // Assume rawPayoff and payoffDerivative are NOT discounted
-        int L = process.path.length;
-        double[] adjointList = new double[L];
-        adjointList[L - 1] = payoffDerivative(process, L - 1);
+        int N = process.path.length;
+        double[] adjointList = new double[N];
+        adjointList[N - 1] = payoffDerivative(process, N - 1);
 
+        double T = getMaturity();
         double dt = process.dt;
-        double rho = adjointList[L - 1] * process.path[L - 1] * dt;
 
-        for(int i = L - 2; i >= 0; i--) {
+        double r = process.drift;
+        double sigma = process.volatility;
+
+        double adjointAssetProductSum = adjointList[N - 1] * process.path[N - 1];
+
+        for(int i = N - 2; i >= 0; i--) {
             adjointList[i] = adjointList[i + 1] * process.stepDerivative(i + 1)
                     + payoffDerivative(process, i);
-            rho += adjointList[i] * process.path[i] * dt;
+            adjointAssetProductSum += adjointList[i] * process.path[i];
         }
 
+        double price = rawPayoff(process);
         double delta = adjointList[0];
+        double rho = adjointAssetProductSum * dt;
+        double theta = adjointAssetProductSum * ((r - sigma * sigma / 2) + sigma / (2 * Math.sqrt(N * T)));
 
-        return new DerivativePrice(rawPayoff(process), delta, rho);
+
+        return new DerivativePrice(price, delta, rho, theta);
     }
 }

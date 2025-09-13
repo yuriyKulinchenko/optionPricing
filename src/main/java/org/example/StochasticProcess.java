@@ -13,6 +13,8 @@ public abstract class StochasticProcess {
     public double volatility;
 
     public double[] path;
+    public double[] randoms;
+
     public double dt;
 
     public StochasticProcess(double spot, double drift, double volatility) {
@@ -28,9 +30,8 @@ public abstract class StochasticProcess {
     public abstract double stepDerivative(int i);
 
     public void simulateSteps(int count, double dt, double[] randoms) {
-        if(path == null || path.length != count) {
-            path = new double[count + 1];
-        }
+        this.path = new double[count + 1];
+        this.randoms = randoms;
 
         path[0] = spot;
         this.dt = dt;

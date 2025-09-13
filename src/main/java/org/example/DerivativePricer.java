@@ -12,6 +12,7 @@ public interface DerivativePricer {
         public double derivativePrice;
         public double delta;
         public double rho;
+        public double theta;
         public List<List<Vector2D>> paths;
 
         public List<Double> sums;
@@ -23,6 +24,7 @@ public interface DerivativePricer {
                 double derivativePrice,
                 double delta,
                 double rho,
+                double theta,
                 List<List<Vector2D>> paths,
                 List<Double> sums,
                 List<Double> squares,
@@ -32,6 +34,7 @@ public interface DerivativePricer {
             this.derivativePrice = derivativePrice;
             this.delta = delta;
             this.rho = rho;
+            this.theta = theta;
             this.paths = paths;
             this.sums = sums;
             this.squares = squares;
