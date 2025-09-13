@@ -79,6 +79,8 @@ public class MonteCarloPricer implements DerivativePricer {
         List<List<Double>> sumsList = Collections.synchronizedList(new ArrayList<>());
         List<List<Double>> sumSquaresList = Collections.synchronizedList(new ArrayList<>());
 
+        double discountFactor = Math.exp(-rate * derivative.getMaturity());
+
         Runnable runnable = getRunnable(
                 derivative,
                 processSupplier,
@@ -87,8 +89,6 @@ public class MonteCarloPricer implements DerivativePricer {
                 sumsList,
                 sumSquaresList
         );
-
-        double scalingFactor = Math.exp(-rate * derivative.getMaturity());
 
         List<Thread> threads = new ArrayList<>();
 
@@ -109,12 +109,12 @@ public class MonteCarloPricer implements DerivativePricer {
         // DEBUG
 
         List<Double> sums = flatten(sumsList)
-                .map(x -> scalingFactor * x).toList();
+                .map(x -> discountFactor * x).toList();
         List<Double> sumSquares = flatten(sumSquaresList)
-                .map(x -> scalingFactor * scalingFactor * x).toList();
+                .map(x -> discountFactor * discountFactor * x).toList();
 
         return new PricerResult(
-                (scalingFactor * adder.sum()) / (workerThreads * N),
+                (discountFactor * adder.sum()) / (workerThreads * N),
                 samplePathList,
                 sums,
                 sumSquares,
@@ -164,8 +164,8 @@ public class MonteCarloPricer implements DerivativePricer {
                 if(i < 3) {
                     // For now, sample just 3 paths from each thread
                     List<Vector2D> vectorPath = new ArrayList<>();
-                    for(int j = 0; j < process.process.length; j++) {
-                        vectorPath.add(new Vector2D(j * dt, process.process[j]));
+                    for(int j = 0; j < process.path.length; j++) {
+                        vectorPath.add(new Vector2D(j * dt, process.path[j]));
                     }
                     samplePathList.add(vectorPath);
                 }

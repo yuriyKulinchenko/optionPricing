@@ -4,11 +4,11 @@ import org.knowm.xchart.XYChart;
 
 import java.util.List;
 
-public interface Derivative {
+public abstract class Derivative {
 
-    class DerivativePrice {
-        double price;
-        double delta;
+    public static class DerivativePrice {
+        public double price;
+        public double delta;
 
         public DerivativePrice(double price, double delta) {
             this.price = price;
@@ -16,6 +16,15 @@ public interface Derivative {
         }
     }
 
-    DerivativePrice payoff(StochasticProcess process);
-    double getMaturity();
+    abstract double rawPayoff(StochasticProcess process);
+    abstract double payoffDerivative(StochasticProcess process, int i);
+    abstract double getMaturity();
+
+    DerivativePrice payoff(StochasticProcess process) {
+        // Assume rawPayoff and payoffDerivative are NOT discounted
+        double price = rawPayoff(process);
+        double delta = 0;
+
+        return new DerivativePrice(price, delta);
+    }
 }

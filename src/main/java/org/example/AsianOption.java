@@ -40,20 +40,24 @@ public class AsianOption extends Option {
     }
 
     @Override
-    public DerivativePrice callPayoff(StochasticProcess process) {
-
+    double callRawPayoff(StochasticProcess process) {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
-                arithmeticAverage(process.process) : geometricAverage(process.process);
+                arithmeticAverage(process.path) : geometricAverage(process.path);
 
-        return new DerivativePrice(Math.max(avg - strikePrice, 0), 0);
+        return Math.max(avg - strikePrice, 0);
     }
 
     @Override
-    DerivativePrice putPayoff(StochasticProcess process) {
+    double putRawPayoff(StochasticProcess process) {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
-                arithmeticAverage(process.process) : geometricAverage(process.process);
+                arithmeticAverage(process.path) : geometricAverage(process.path);
 
-        return new DerivativePrice(Math.max(strikePrice - avg, 0), 0);
+        return Math.max(strikePrice - avg, 0);
+    }
+
+    @Override
+    double payoffDerivative(StochasticProcess process, int i) {
+        return 0;
     }
 
     @Override

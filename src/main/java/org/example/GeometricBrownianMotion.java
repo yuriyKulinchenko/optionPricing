@@ -17,6 +17,6 @@ public class GeometricBrownianMotion extends StochasticProcess {
 
     @Override
     public double stepDerivative(int i) throws OutOfRangeException {
-        return process[i] / process[i - 1];
+        return path[i] / path[i - 1];
     }
 }

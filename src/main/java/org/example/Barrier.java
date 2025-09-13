@@ -4,7 +4,7 @@ import org.knowm.xchart.XYChart;
 
 import java.util.List;
 
-public class Barrier implements Derivative {
+public class Barrier extends Derivative {
 
     public final Derivative derivative;
     public final double barrier;
@@ -26,11 +26,16 @@ public class Barrier implements Derivative {
     }
 
     @Override
-    public DerivativePrice payoff(StochasticProcess process) {
-        boolean breached = breachedBarrier(process.process);
+    double rawPayoff(StochasticProcess process) {
+        boolean breached = breachedBarrier(process.path);
 
         boolean exists = knockIn && breached || !knockIn && !breached;
-        return exists ? derivative.payoff(process) : new DerivativePrice(0, 0);
+        return exists ? derivative.rawPayoff(process) : 0;
+    }
+
+    @Override
+    double payoffDerivative(StochasticProcess process, int i) {
+        return 0;
     }
 
     private boolean breachedBarrier(double[] path) {
