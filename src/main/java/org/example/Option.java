@@ -11,11 +11,11 @@ public abstract class Option implements Derivative {
         PUT
     }
 
-    abstract double callPayoff(StochasticProcess process);
-    abstract double putPayoff(StochasticProcess process);
+    abstract DerivativePrice callPayoff(StochasticProcess process);
+    abstract DerivativePrice putPayoff(StochasticProcess process);
 
     @Override
-    public double payoff(StochasticProcess process) {
+    public DerivativePrice payoff(StochasticProcess process) {
         if(type == Type.CALL) {
             return callPayoff(process);
         } else {

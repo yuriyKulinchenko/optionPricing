@@ -18,13 +18,15 @@ public class EuropeanOption extends Option {
     }
 
     @Override
-    double callPayoff(StochasticProcess process) {
-        return Math.max(process.process[process.process.length - 1] - strikePrice, 0);
+    DerivativePrice callPayoff(StochasticProcess process) {
+        double price = Math.max(process.process[process.process.length - 1] - strikePrice, 0);
+        return new DerivativePrice(price, 0);
     }
 
     @Override
-    double putPayoff(StochasticProcess process) {
-        return Math.max(strikePrice - process.process[process.process.length - 1], 0);
+    DerivativePrice putPayoff(StochasticProcess process) {
+        double price = Math.max(strikePrice - process.process[process.process.length - 1], 0);
+        return new DerivativePrice(price, 0);
     }
 
     @Override

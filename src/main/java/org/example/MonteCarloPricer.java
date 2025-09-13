@@ -154,11 +154,11 @@ public class MonteCarloPricer implements DerivativePricer {
                 double[] randoms = sobol.nextNormalVector();
 
                 process.simulateSteps(steps, dt, randoms);
-                double payoff = derivative.payoff(process);
+                Derivative.DerivativePrice payoff = derivative.payoff(process);
 
-                sum += payoff;
-                batchSum += payoff;
-                batchSumSquare += payoff * payoff;
+                sum += payoff.price;
+                batchSum += payoff.price;
+                batchSumSquare += payoff.price * payoff.price;
 
 
                 if(i < 3) {
