@@ -56,6 +56,16 @@ public class AsianOption extends Option {
     }
 
     @Override
+    double callPayoffDerivative(StochasticProcess process, int i) {
+        return 0;
+    }
+
+    @Override
+    double putPayoffDerivative(StochasticProcess process, int i) {
+        return 0;
+    }
+
+    @Override
     double payoffDerivative(StochasticProcess process, int i) {
         return 0;
     }

@@ -14,6 +14,9 @@ public abstract class Option extends Derivative {
     abstract double callRawPayoff(StochasticProcess process);
     abstract double putRawPayoff(StochasticProcess process);
 
+    abstract double callPayoffDerivative(StochasticProcess process, int i);
+    abstract double putPayoffDerivative(StochasticProcess process, int i);
+
     @Override
     double rawPayoff(StochasticProcess process) {
         if(type == Type.CALL) {
@@ -25,6 +28,10 @@ public abstract class Option extends Derivative {
 
     @Override
     double payoffDerivative(StochasticProcess process, int i) {
-        return 0;
+        if(type == Type.CALL) {
+            return callPayoffDerivative(process, i);
+        } else {
+            return putPayoffDerivative(process, i);
+        }
     }
 }

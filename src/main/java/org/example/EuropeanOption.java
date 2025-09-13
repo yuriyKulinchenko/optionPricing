@@ -28,6 +28,20 @@ public class EuropeanOption extends Option {
     }
 
     @Override
+    double callPayoffDerivative(StochasticProcess process, int i) {
+        if(i == process.path.length - 1) {
+            return process.path[i] > strikePrice ? 1 : 0;
+        } else return 0;
+    }
+
+    @Override
+    double putPayoffDerivative(StochasticProcess process, int i) {
+        if(i == process.path.length - 1) {
+            return process.path[i] > strikePrice ? 1 : 0;
+        } else return 0;
+    }
+
+    @Override
     public double getMaturity() {
         return maturity;
     }
