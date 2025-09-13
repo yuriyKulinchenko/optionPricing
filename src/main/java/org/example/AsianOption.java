@@ -7,6 +7,8 @@ public class AsianOption extends Option {
     public double maturity;
     public AveragingType averagingType;
 
+    public double average;
+
     public enum AveragingType {
         ARITHMETIC,
         GEOMETRIC
@@ -44,6 +46,7 @@ public class AsianOption extends Option {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
                 arithmeticAverage(process.path) : geometricAverage(process.path);
 
+        average = avg;
         return Math.max(avg - strikePrice, 0);
     }
 
@@ -52,22 +55,32 @@ public class AsianOption extends Option {
         double avg = (averagingType == AveragingType.ARITHMETIC) ?
                 arithmeticAverage(process.path) : geometricAverage(process.path);
 
+        average = avg;
         return Math.max(strikePrice - avg, 0);
     }
 
     @Override
     double callPayoffDerivative(StochasticProcess process, int i) {
-        return 0;
+        if(average < strikePrice) return 0;
+        int N = process.path.length;
+
+        if(averagingType == AveragingType.ARITHMETIC) {
+            return 1. / N;
+        } else { // Geometric
+            return average / (process.path[i] * N);
+        }
     }
 
     @Override
     double putPayoffDerivative(StochasticProcess process, int i) {
-        return 0;
-    }
+        if(average > strikePrice) return 0;
+        int N = process.path.length;
 
-    @Override
-    double payoffDerivative(StochasticProcess process, int i) {
-        return 0;
+        if(averagingType == AveragingType.ARITHMETIC) {
+            return -1. / N;
+        } else { // Geometric
+            return -average / (process.path[i] * N);
+        }
     }
 
     @Override
