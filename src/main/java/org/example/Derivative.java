@@ -7,12 +7,20 @@ public abstract class Derivative {
         public double delta;
         public double rho;
         public double theta;
+        public double vega;
 
-        public DerivativePrice(double price, double delta, double rho, double theta) {
+        public DerivativePrice(
+                double price,
+                double delta,
+                double rho,
+                double theta,
+                double vega
+        ) {
             this.price = price;
             this.delta = delta;
             this.rho = rho;
             this.theta = theta;
+            this.vega = vega;
         }
     }
 
@@ -35,6 +43,9 @@ public abstract class Derivative {
         double alpha_t = (r - 0.5 * sigma * sigma) / N;
         double beta_t = sigma / (2 * Math.sqrt(N * T));
 
+        double alpha_sigma = - process.volatility * dt;
+        double beta_sigma = Math.sqrt(dt);
+
         double product = adjointList[N - 1] * process.path[N - 1];
         double productSum = product;
         double productRandomSum = product * process.randoms[N - 2];
@@ -52,9 +63,9 @@ public abstract class Derivative {
         double delta = adjointList[0];
         double rho = productSum * dt;
         double theta = alpha_t * productSum + beta_t * productRandomSum;
-        if(theta < 0) System.out.println(theta);
+        double vega = alpha_sigma * productSum + beta_sigma * productRandomSum;
 
 
-        return new DerivativePrice(price, delta, rho, theta);
+        return new DerivativePrice(price, delta, rho, theta, vega);
     }
 }

@@ -403,8 +403,15 @@ public class UIConfig extends Application {
         Label deltaLabel = new Label("Estimated delta: 0.000");
         Label rhoLabel = new Label("Estimated rho: 0.000");
         Label thetaLabel = new Label("Estimated theta: 0.000");
+        Label vegaLabel = new Label("Estimated vega: 0.000");
 
-        VBox results = new VBox(8, estimatedPriceLabel, deltaLabel, rhoLabel, thetaLabel);
+        VBox results = new VBox(8,
+                estimatedPriceLabel,
+                deltaLabel,
+                rhoLabel,
+                thetaLabel,
+                vegaLabel
+        );
 
         pricerResult.addListener((_, _, val) -> {
             UIGraph.populateSimulationChart(val.paths);
@@ -415,12 +422,17 @@ public class UIConfig extends Application {
             deltaLabel.textProperty().set("Estimated delta: "
                     + String.format("%.3f", val.delta));
 
-            // Change val.rho is multiplied by 0.01 by convention
+            // Rho is in units 1%, not 100%, so it must be scaled
             rhoLabel.textProperty().set("Estimated rho: "
                     + String.format("%.3f", 0.01 * val.rho));
 
+            // Theta is typically expressed per day, so it must be scaled accordingly
             thetaLabel.textProperty().set("Estimated theta: "
                     + String.format("%.3f", - val.theta / 365));
+
+            vegaLabel.textProperty().set("Estimated vega: "
+                    + String.format("%.3f", 0.01 * val.vega));
+
         });
 
 
