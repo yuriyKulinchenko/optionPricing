@@ -32,18 +32,27 @@ public abstract class Derivative {
         double r = process.drift;
         double sigma = process.volatility;
 
-        double adjointAssetProductSum = adjointList[N - 1] * process.path[N - 1];
+        double alpha_t = (r - 0.5 * sigma * sigma) / N;
+        double beta_t = sigma / (2 * Math.sqrt(N * T));
+
+        double product = adjointList[N - 1] * process.path[N - 1];
+        double productSum = product;
+        double productRandomSum = product * process.randoms[N - 2];
 
         for(int i = N - 2; i >= 0; i--) {
             adjointList[i] = adjointList[i + 1] * process.stepDerivative(i + 1)
                     + payoffDerivative(process, i);
-            adjointAssetProductSum += adjointList[i] * process.path[i];
+
+            product = adjointList[i] * process.path[i];
+            productSum += product;
+            if(i != 0) productRandomSum += product * process.randoms[i-1];
         }
 
         double price = rawPayoff(process);
         double delta = adjointList[0];
-        double rho = adjointAssetProductSum * dt;
-        double theta = adjointAssetProductSum * ((r - sigma * sigma / 2) + sigma / (2 * Math.sqrt(N * T)));
+        double rho = productSum * dt;
+        double theta = alpha_t * productSum + beta_t * productRandomSum;
+        if(theta < 0) System.out.println(theta);
 
 
         return new DerivativePrice(price, delta, rho, theta);

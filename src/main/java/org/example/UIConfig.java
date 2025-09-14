@@ -420,7 +420,7 @@ public class UIConfig extends Application {
                     + String.format("%.3f", 0.01 * val.rho));
 
             thetaLabel.textProperty().set("Estimated theta: "
-                    + String.format("%.3f", val.theta));
+                    + String.format("%.3f", - val.theta / 365));
         });
 
 
