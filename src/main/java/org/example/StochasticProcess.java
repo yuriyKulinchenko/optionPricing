@@ -5,27 +5,10 @@ import org.apache.commons.math3.exception.OutOfRangeException;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.Derivative.DerivativePrice;
+import org.example.Derivative.LogScore;
+import org.example.Derivative.PathwiseGreeks;
 
 public abstract class StochasticProcess {
-
-    public static class LogScore {
-        public double delta;
-        public double rho;
-        public double theta;
-        public double vega;
-
-        public LogScore(
-                double delta,
-                double rho,
-                double theta,
-                double vega
-        ) {
-            this.delta = delta;
-            this.rho = rho;
-            this.theta = theta;
-            this.vega = vega;
-        }
-    }
 
     public double spot;
     public double current;
@@ -45,8 +28,10 @@ public abstract class StochasticProcess {
     }
 
     public abstract void simulateSteps(int count, double dt, double[] randoms);
+
     public abstract LogScore getLogScore();
-    public abstract DerivativePrice payoff(Derivative derivative);
+    public abstract PathwiseGreeks getPathwiseGreeks(Derivative derivative);
+
 
     // stepDerivative(i) := dS_i/dS_i-1
     public abstract double stepDerivative(int i);

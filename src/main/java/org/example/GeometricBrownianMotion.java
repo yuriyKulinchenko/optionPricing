@@ -2,6 +2,8 @@ package org.example;
 
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.example.Derivative.DerivativePrice;
+import org.example.Derivative.LogScore;
+import org.example.Derivative.PathwiseGreeks;
 
 public class GeometricBrownianMotion extends StochasticProcess {
 
@@ -34,7 +36,7 @@ public class GeometricBrownianMotion extends StochasticProcess {
     */
 
     @Override
-    public DerivativePrice payoff(Derivative derivative) {
+    public PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
         // Assume rawPayoff and payoffDerivative are NOT discounted
         int N = this.path.length;
         double[] adjointList = new double[N];
@@ -64,14 +66,12 @@ public class GeometricBrownianMotion extends StochasticProcess {
             if(i != 0) productRandomSum += product * randoms[i-1];
         }
 
-        double price = derivative.rawPayoff(this);
         double delta = adjointList[0];
         double rho = productSum * dt;
         double theta = alpha_t * productSum + beta_t * productRandomSum;
         double vega = alpha_sigma * productSum + beta_sigma * productRandomSum;
 
-
-        return new DerivativePrice(price, delta, rho, theta, vega);
+        return new PathwiseGreeks(delta, rho, theta, vega);
     }
 
     @Override

@@ -1,9 +1,9 @@
 package org.example;
 
-import jdk.jshell.spi.ExecutionControl;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.commons.math3.exception.OutOfRangeException;
+import org.example.Derivative.LogScore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class JumpDiffusion extends StochasticProcess {
     }
 
     @Override
-    public Derivative.DerivativePrice payoff(Derivative derivative) {
+    public Derivative.PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
         return null;
     }
 

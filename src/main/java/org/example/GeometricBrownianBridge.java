@@ -2,6 +2,7 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.example.Derivative.LogScore;
 
 public class GeometricBrownianBridge extends StochasticProcess {
 
@@ -33,7 +34,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
             prices.add(spot * Math.exp(adjustedDrift * t + volatility * process[i]));
         }
 
-        // Does nothing for now
+        this.path = prices.stream().mapToDouble(Double::doubleValue).toArray();
     }
 
     public void simulateWienerProcess(double[] process, int i, int k) {
@@ -63,7 +64,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
     }
 
     @Override
-    public Derivative.DerivativePrice payoff(Derivative derivative) {
+    public Derivative.PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
         return null;
     }
 
