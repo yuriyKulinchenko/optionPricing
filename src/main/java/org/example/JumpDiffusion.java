@@ -3,7 +3,8 @@ package org.example;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.commons.math3.exception.OutOfRangeException;
-import org.example.Derivative.LogScore;
+import org.example.GreekData.PathwiseGreeks;
+import org.example.GreekData.LogScore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public class JumpDiffusion extends StochasticProcess {
     }
 
     @Override
-    public Derivative.PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
+    public PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
         return null;
     }
 

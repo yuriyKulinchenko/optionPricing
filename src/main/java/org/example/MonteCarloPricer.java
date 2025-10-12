@@ -2,6 +2,11 @@ package org.example;
 
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
+import org.example.GreekData.PathwiseGreeks;
+import org.example.GreekData.LogScore;
+import org.example.GreekData.GreekDataAdder;
+import org.example.Derivative.DerivativePrice;
+
 import java.util.*;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Supplier;
@@ -73,10 +78,8 @@ public class MonteCarloPricer implements DerivativePricer {
     public static class MTCData {
 
         public final DoubleAdder adder;
-        public final DoubleAdder deltaAdder;
-        public final DoubleAdder rhoAdder;
-        public final DoubleAdder thetaAdder;
-        public final DoubleAdder vegaAdder;
+        public final GreekDataAdder greekAdderPathwise;
+        public final GreekDataAdder greekAdderLRM;
 
         public final List<List<Vector2D>> samplePathList;
         public final List<List<Double>> sumsList;
@@ -84,15 +87,25 @@ public class MonteCarloPricer implements DerivativePricer {
 
         public MTCData() {
             this.adder = new DoubleAdder();
-            this.deltaAdder = new DoubleAdder();
-            this.rhoAdder = new DoubleAdder();
-            this.thetaAdder = new DoubleAdder();
-            this.vegaAdder = new DoubleAdder();
+            this.greekAdderPathwise = new GreekDataAdder();
+            this.greekAdderLRM = new GreekDataAdder();
 
             this.samplePathList = Collections.synchronizedList(new ArrayList<>());
             this.sumsList = Collections.synchronizedList(new ArrayList<>());
             this.sumSquaresList = Collections.synchronizedList(new ArrayList<>());
         }
+    }
+
+    public void discountGreekData(
+            GreekData data,
+            double constant,
+            double price,
+            double T
+    ) {
+        data.delta = constant * data.delta;
+        data.rho = constant * data.rho - T * price;
+        data.theta =  constant * data.theta - rate * price;
+        data.vega = constant * data.vega;
     }
 
     @Override
@@ -130,18 +143,20 @@ public class MonteCarloPricer implements DerivativePricer {
         double T = derivative.getMaturity();
 
         double price = data.adder.sum() * constant;
-        double delta = data.deltaAdder.sum() * constant;
-        double rho = data.rhoAdder.sum() * constant - T * price;
-        double theta = data.thetaAdder.sum() * constant - rate * price;
-        double vega = data.vegaAdder.sum() * constant;
 
+        GreekData greekDataPathwise = data.greekAdderPathwise.sum();
+        GreekData greekDataLRM = data.greekAdderPathwise.sum();
 
+        discountGreekData(greekDataPathwise, constant, price, T);
+        discountGreekData(greekDataLRM, constant, price, T);
+
+        // TODO: PriceResult should handle LRM computed greeks and pathwise greeks
         return new PricerResult(
                 price,
-                delta,
-                rho,
-                theta,
-                vega,
+                greekDataLRM.delta,
+                greekDataLRM.rho,
+                greekDataLRM.theta,
+                greekDataLRM.vega,
                 data.samplePathList,
                 sums,
                 sumSquares,
@@ -170,10 +185,8 @@ public class MonteCarloPricer implements DerivativePricer {
             }
 
             double sum = 0;
-            double deltaSum = 0;
-            double rhoSum = 0;
-            double thetaSum = 0;
-            double vegaSum = 0;
+            GreekData greekSumPathwise = new GreekData(0, 0, 0, 0);
+            GreekData greekSumLRM = new GreekData(0, 0, 0, 0);
 
             double batchSum = 0;
             double batchSumSquare = 0;
@@ -184,18 +197,20 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 process.simulateSteps(steps, dt, randoms);
 
-                Derivative.DerivativePrice payoff = derivative.payoff(process);
-                Derivative.PathwiseGreeks pathwiseGreeks = payoff.pathwiseGreeks;
+                // TODO: For now, assume LRM and pathwise are both valid - Not generally true
+
+                DerivativePrice payoff = derivative.payoff(process);
+                PathwiseGreeks pathwiseGreeks = payoff.pathwiseGreeks;
+                LogScore logScore = payoff.logScore;
 
 
                 sum += payoff.price;
-                deltaSum += pathwiseGreeks.delta;
-                rhoSum += pathwiseGreeks.rho;
-                thetaSum += pathwiseGreeks.theta;
-                vegaSum += pathwiseGreeks.vega;
-
                 batchSum += payoff.price;
                 batchSumSquare += payoff.price * payoff.price;
+
+                greekSumPathwise.add(pathwiseGreeks);
+                // greekSumLRM.add(logScore.multiply(payoff.price)); <- Temporary!
+
 
 
                 if(i < 3) {
@@ -220,10 +235,9 @@ public class MonteCarloPricer implements DerivativePricer {
             data.sumsList.add(sums);
             data.sumSquaresList.add(sumSquares);
             data.adder.add(sum);
-            data.deltaAdder.add(deltaSum);
-            data.rhoAdder.add(rhoSum);
-            data.thetaAdder.add(thetaSum);
-            data.vegaAdder.add(vegaSum);
+
+            data.greekAdderLRM.add(greekSumLRM);
+            data.greekAdderPathwise.add(greekSumPathwise);
         };
     }
 }

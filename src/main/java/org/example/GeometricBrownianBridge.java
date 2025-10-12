@@ -2,7 +2,8 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.example.Derivative.LogScore;
+import org.example.GreekData.LogScore;
+import org.example.GreekData.PathwiseGreeks;
 
 public class GeometricBrownianBridge extends StochasticProcess {
 
@@ -64,7 +65,7 @@ public class GeometricBrownianBridge extends StochasticProcess {
     }
 
     @Override
-    public Derivative.PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
+    public PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
         return null;
     }
 

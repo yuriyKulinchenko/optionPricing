@@ -5,8 +5,8 @@ import org.apache.commons.math3.exception.OutOfRangeException;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.Derivative.DerivativePrice;
-import org.example.Derivative.LogScore;
-import org.example.Derivative.PathwiseGreeks;
+import org.example.GreekData.LogScore;
+import org.example.GreekData.PathwiseGreeks;
 
 public abstract class StochasticProcess {
 
