@@ -49,7 +49,7 @@ public class Sobol {
         if(index > N) throw new OutOfRangeException(index, 0, N);
         double[] uniforms = generator.nextVector();
         for(int i = 0; i < uniforms.length; i++) {
-            double x = uniforms[i] += delta[i];
+            double x = uniforms[i] + delta[i];
             uniforms[i] = x - Math.floor(x);
         }
         transformToNormal(uniforms);

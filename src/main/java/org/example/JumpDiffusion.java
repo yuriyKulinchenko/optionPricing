@@ -58,6 +58,16 @@ public class JumpDiffusion extends StochasticProcess {
     }
 
     @Override
+    public LogScore getLogScore() {
+        return null;
+    }
+
+    @Override
+    public Derivative.DerivativePrice payoff(Derivative derivative) {
+        return null;
+    }
+
+    @Override
     public double stepDerivative(int i) throws OutOfRangeException {
         return 0;
     }
