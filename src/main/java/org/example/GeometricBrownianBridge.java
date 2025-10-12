@@ -58,14 +58,6 @@ public class GeometricBrownianBridge extends StochasticProcess {
     }
 
     @Override
-    public double simulateStep(double dt, double Z) {
-        // Should not be used: Defeats purpose of bridge construction
-        double adjustedDrift = drift - 0.5 * volatility * volatility;
-        current *=  Math.exp(adjustedDrift * dt + volatility * Math.sqrt(dt) * Z);
-        return current;
-    }
-
-    @Override
     public LogScore getLogScore() {
         return null;
     }

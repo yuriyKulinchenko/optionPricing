@@ -10,16 +10,32 @@ public class GeometricBrownianMotion extends StochasticProcess {
     }
 
     @Override
-    public double simulateStep(double dt, double Z) {
+    public void simulateSteps(int count, double dt, double[] randoms) {
+        this.path = new double[count + 1];
+        this.randoms = randoms;
+        this.dt = dt;
+
+        path[0] = spot;
+        double current = spot;
+
         double adjustedDrift = drift - 0.5 * volatility * volatility;
-        current *=  Math.exp(adjustedDrift * dt + volatility * Math.sqrt(dt) * Z);
-        return current;
+        for(int i = 0; i < count; i++) {
+            double Z = randoms[i];
+            current *= Math.exp(adjustedDrift * dt + volatility * Math.sqrt(dt) * Z);
+            path[i + 1] = current;
+        }
     }
+
+    // Both payoff and getLogScore rely on this.path and this.randoms being populated
+
+    /*
+    TODO: Further generalize StochasticProcess by making this.path and this.randoms GBM specific
+    This way, more complex stochastic processes with multiple sources of randomness can be handled
+    */
 
     @Override
     public DerivativePrice payoff(Derivative derivative) {
         // Assume rawPayoff and payoffDerivative are NOT discounted
-        // TODO: payoff should be associated with stochastic process, not with Derivative
         int N = this.path.length;
         double[] adjointList = new double[N];
         adjointList[N - 1] = derivative.payoffDerivative(this, N - 1);

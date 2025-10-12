@@ -53,11 +53,6 @@ public class JumpDiffusion extends StochasticProcess {
     }
 
     @Override
-    public double simulateStep(double dt, double Z)  {
-        return 0; // Not required for this
-    }
-
-    @Override
     public LogScore getLogScore() {
         return null;
     }

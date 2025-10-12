@@ -1,5 +1,7 @@
 package org.example;
 
+import org.example.StochasticProcess.LogScore;
+
 public abstract class Derivative {
 
     public static class DerivativePrice {
@@ -28,7 +30,15 @@ public abstract class Derivative {
     abstract double payoffDerivative(StochasticProcess process, int i);
     abstract double getMaturity();
 
+    // The following methods use arguably too much indirection: They are here for backwards compatibility
+
     DerivativePrice payoff(StochasticProcess process) {
-        return process.payoff(this); // Arguably messy?
+        return process.payoff(this);
     }
+
+    LogScore getLogScore(StochasticProcess process) {
+        return process.getLogScore();
+    }
+
+
 }

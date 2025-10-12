@@ -44,24 +44,13 @@ public abstract class StochasticProcess {
         current = spot;
     }
 
-    public abstract double simulateStep(double dt, double Z);
+    public abstract void simulateSteps(int count, double dt, double[] randoms);
     public abstract LogScore getLogScore();
     public abstract DerivativePrice payoff(Derivative derivative);
 
     // stepDerivative(i) := dS_i/dS_i-1
     public abstract double stepDerivative(int i);
 
-    public void simulateSteps(int count, double dt, double[] randoms) {
-        this.path = new double[count + 1];
-        this.randoms = randoms;
-
-        path[0] = spot;
-        this.dt = dt;
-
-        for(int i = 0; i < count; i++) {
-            path[i + 1] = simulateStep(dt, randoms[i]);
-        }
-    }
 
     public void reset() {
         current = spot;
