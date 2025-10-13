@@ -177,9 +177,9 @@ public class UIConfig extends Application {
                 form,
                 new Label("Derivative type:"),
                 optionSelector,
-                getSeparator(Orientation.HORIZONTAL),
+                getSeparator(true),
                 derivativeConfig,
-                getSeparator(Orientation.HORIZONTAL),
+                getSeparator(true),
                 btn
         );
 
@@ -389,6 +389,12 @@ public class UIConfig extends Application {
         return config;
     }
 
+    private Label headingLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-weight: bold;");
+        return label;
+    }
+
     private Node outputBox() {
 
         Label title = new Label("Graphs");
@@ -399,23 +405,26 @@ public class UIConfig extends Application {
                 UIGraph.varianceChart
         );
 
-        Label estimatedPriceLabelPathwise = new Label("Estimated price: 0.000");
+        Label estimatedPriceLabel = new Label("Estimated price: 0.000");
+
         Label deltaLabelPathwise = new Label("Estimated delta: 0.000");
         Label rhoLabelPathwise = new Label("Estimated rho: 0.000");
         Label thetaLabelPathwise = new Label("Estimated theta: 0.000");
         Label vegaLabelPathwise = new Label("Estimated vega: 0.000");
 
-        Label estimatedPriceLabelLRM = new Label("Estimated price: 0.000");
         Label deltaLabelLRM = new Label("Estimated delta: 0.000");
         Label rhoLabelLRM = new Label("Estimated rho: 0.000");
         Label thetaLabelLRM = new Label("Estimated theta: 0.000");
         Label vegaLabelLRM = new Label("Estimated vega: 0.000");
 
 
+        VBox resultsPrice = new VBox(8,
+                headingLabel("Raw Price"),
+                estimatedPriceLabel
+        );
 
         VBox resultsPathwise = new VBox(8,
-                new Label("Pathwise Results"),
-                estimatedPriceLabelPathwise,
+                headingLabel("Pathwise Results"),
                 deltaLabelPathwise,
                 rhoLabelPathwise,
                 thetaLabelPathwise,
@@ -423,21 +432,26 @@ public class UIConfig extends Application {
         );
 
         VBox resultsLRM = new VBox(8,
-                new Label("LRM results"),
-                estimatedPriceLabelLRM,
+                headingLabel("LRM results"),
                 deltaLabelLRM,
                 rhoLabelLRM,
                 thetaLabelLRM,
                 vegaLabelLRM
         );
 
+        HBox results = new HBox(8,
+                resultsPrice,
+                getSeparator(false),
+                resultsPathwise,
+                getSeparator(false),
+                resultsLRM
+        );
+
         pricerResult.addListener((_, _, val) -> {
             UIGraph.populateSimulationChart(val.paths);
             UIGraph.populateVarianceChart(val.sums, val.squares, val.chunkSize);
 
-            estimatedPriceLabelPathwise.textProperty().set("Estimated price: "
-                    + String.format("%.3f", val.derivativePrice));
-            estimatedPriceLabelLRM.textProperty().set("Estimated price: "
+            estimatedPriceLabel.textProperty().set("Estimated price: "
                     + String.format("%.3f", val.derivativePrice));
 
             deltaLabelPathwise.textProperty().set("Estimated delta: "
@@ -469,7 +483,7 @@ public class UIConfig extends Application {
 
         VBox output = new VBox(8.,
                 graphs,
-                new HBox(8, resultsPathwise, resultsLRM)
+                results
         );
 
         output.setPadding(new Insets(10));
@@ -478,9 +492,9 @@ public class UIConfig extends Application {
         return output;
     }
 
-    private Separator getSeparator(Orientation orientation) {
+    private Separator getSeparator(boolean isHorizontal) {
         Separator separator = new Separator();
-        separator.setOrientation(orientation);
+        separator.setOrientation(isHorizontal ? Orientation.HORIZONTAL : Orientation.VERTICAL);
         return separator;
     }
 
@@ -493,7 +507,7 @@ public class UIConfig extends Application {
 
         Node config = new VBox(8,
                 simulationConfig,
-                getSeparator(Orientation.HORIZONTAL),
+                getSeparator(true),
                 derivativeConfig
         );
 
