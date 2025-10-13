@@ -399,40 +399,68 @@ public class UIConfig extends Application {
                 UIGraph.varianceChart
         );
 
-        Label estimatedPriceLabel = new Label("Estimated price: 0.000");
-        Label deltaLabel = new Label("Estimated delta: 0.000");
-        Label rhoLabel = new Label("Estimated rho: 0.000");
-        Label thetaLabel = new Label("Estimated theta: 0.000");
-        Label vegaLabel = new Label("Estimated vega: 0.000");
+        Label estimatedPriceLabelPathwise = new Label("Estimated price: 0.000");
+        Label deltaLabelPathwise = new Label("Estimated delta: 0.000");
+        Label rhoLabelPathwise = new Label("Estimated rho: 0.000");
+        Label thetaLabelPathwise = new Label("Estimated theta: 0.000");
+        Label vegaLabelPathwise = new Label("Estimated vega: 0.000");
 
-        VBox results = new VBox(8,
-                estimatedPriceLabel,
-                deltaLabel,
-                rhoLabel,
-                thetaLabel,
-                vegaLabel
+        Label estimatedPriceLabelLRM = new Label("Estimated price: 0.000");
+        Label deltaLabelLRM = new Label("Estimated delta: 0.000");
+        Label rhoLabelLRM = new Label("Estimated rho: 0.000");
+        Label thetaLabelLRM = new Label("Estimated theta: 0.000");
+        Label vegaLabelLRM = new Label("Estimated vega: 0.000");
+
+
+
+        VBox resultsPathwise = new VBox(8,
+                new Label("Pathwise Results"),
+                estimatedPriceLabelPathwise,
+                deltaLabelPathwise,
+                rhoLabelPathwise,
+                thetaLabelPathwise,
+                vegaLabelPathwise
+        );
+
+        VBox resultsLRM = new VBox(8,
+                new Label("LRM results"),
+                estimatedPriceLabelLRM,
+                deltaLabelLRM,
+                rhoLabelLRM,
+                thetaLabelLRM,
+                vegaLabelLRM
         );
 
         pricerResult.addListener((_, _, val) -> {
             UIGraph.populateSimulationChart(val.paths);
             UIGraph.populateVarianceChart(val.sums, val.squares, val.chunkSize);
-            estimatedPriceLabel.textProperty().set("Estimated price: "
+
+            estimatedPriceLabelPathwise.textProperty().set("Estimated price: "
+                    + String.format("%.3f", val.derivativePrice));
+            estimatedPriceLabelLRM.textProperty().set("Estimated price: "
                     + String.format("%.3f", val.derivativePrice));
 
-            deltaLabel.textProperty().set("Estimated delta: "
-                    + String.format("%.3f", val.delta));
+            deltaLabelPathwise.textProperty().set("Estimated delta: "
+                    + String.format("%.3f", val.greeksPathwise.delta));
+            deltaLabelLRM.textProperty().set("Estimated delta: "
+                    + String.format("%.3f", val.greeksLRM.delta));
 
             // Rho is in units 1%, not 100%, so it must be scaled
-            rhoLabel.textProperty().set("Estimated rho: "
-                    + String.format("%.3f", 0.01 * val.rho));
+            rhoLabelPathwise.textProperty().set("Estimated rho: "
+                    + String.format("%.3f", 0.01 * val.greeksPathwise.rho));
+            rhoLabelLRM.textProperty().set("Estimated rho: "
+                    + String.format("%.3f", 0.01 * val.greeksLRM.rho));
 
             // Theta is typically expressed per day, so it must be scaled accordingly
-            thetaLabel.textProperty().set("Estimated theta: "
-                    + String.format("%.3f", - val.theta / 365));
+            thetaLabelPathwise.textProperty().set("Estimated theta: "
+                    + String.format("%.3f", - val.greeksPathwise.theta / 365));
+            thetaLabelLRM.textProperty().set("Estimated theta: "
+                    + String.format("%.3f", - val.greeksLRM.theta / 365));
 
-            vegaLabel.textProperty().set("Estimated vega: "
-                    + String.format("%.3f", 0.01 * val.vega));
-
+            vegaLabelPathwise.textProperty().set("Estimated vega: "
+                    + String.format("%.3f", 0.01 * val.greeksPathwise.vega));
+            vegaLabelLRM.textProperty().set("Estimated vega: "
+                    + String.format("%.3f", 0.01 * val.greeksLRM.vega));
         });
 
 
@@ -441,7 +469,7 @@ public class UIConfig extends Application {
 
         VBox output = new VBox(8.,
                 graphs,
-                results
+                new HBox(8, resultsPathwise, resultsLRM)
         );
 
         output.setPadding(new Insets(10));

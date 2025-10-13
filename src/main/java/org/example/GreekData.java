@@ -33,6 +33,16 @@ public class GreekData {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "GreekData{" +
+                "delta=" + delta +
+                ", rho=" + rho +
+                ", theta=" + theta +
+                ", vega=" + vega +
+                '}';
+    }
+
     public GreekData multiply(double constant) {
         this.delta *= constant;
         this.rho *= constant;

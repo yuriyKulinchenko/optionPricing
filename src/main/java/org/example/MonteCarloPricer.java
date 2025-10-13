@@ -145,18 +145,15 @@ public class MonteCarloPricer implements DerivativePricer {
         double price = data.adder.sum() * constant;
 
         GreekData greekDataPathwise = data.greekAdderPathwise.sum();
-        GreekData greekDataLRM = data.greekAdderPathwise.sum();
+        GreekData greekDataLRM = data.greekAdderLRM.sum();
 
         discountGreekData(greekDataPathwise, constant, price, T);
         discountGreekData(greekDataLRM, constant, price, T);
 
-        // TODO: PriceResult should handle LRM computed greeks and pathwise greeks
         return new PricerResult(
                 price,
-                greekDataLRM.delta,
-                greekDataLRM.rho,
-                greekDataLRM.theta,
-                greekDataLRM.vega,
+                greekDataPathwise,
+                greekDataLRM,
                 data.samplePathList,
                 sums,
                 sumSquares,
@@ -197,9 +194,8 @@ public class MonteCarloPricer implements DerivativePricer {
 
                 process.simulateSteps(steps, dt, randoms);
 
-                // TODO: For now, assume LRM and pathwise are both valid - Not generally true
-
                 DerivativePrice payoff = derivative.payoff(process);
+
                 PathwiseGreeks pathwiseGreeks = payoff.pathwiseGreeks;
                 LogScore logScore = payoff.logScore;
 
@@ -209,9 +205,7 @@ public class MonteCarloPricer implements DerivativePricer {
                 batchSumSquare += payoff.price * payoff.price;
 
                 greekSumPathwise.add(pathwiseGreeks);
-                // greekSumLRM.add(logScore.multiply(payoff.price)); <- Temporary!
-
-
+                greekSumLRM.add(logScore.multiply(payoff.price));
 
                 if(i < 3) {
                     // For now, sample just 3 paths from each thread

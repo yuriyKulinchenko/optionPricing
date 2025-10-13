@@ -75,7 +75,12 @@ public class GeometricBrownianMotion extends StochasticProcess {
 
     @Override
     public LogScore getLogScore() {
-        return null;
+        double adjustedDrift = drift - 0.5 * volatility * volatility;
+
+        double delta = (Math.log(path[1] / path[0]) - adjustedDrift * dt)
+                / (spot * volatility * volatility * dt);
+
+        return new LogScore(delta, 0, 0, 0);
     }
 
     @Override
