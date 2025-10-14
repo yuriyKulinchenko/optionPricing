@@ -76,11 +76,18 @@ public class GeometricBrownianMotion extends StochasticProcess {
     @Override
     public LogScore getLogScore() {
         double adjustedDrift = drift - 0.5 * volatility * volatility;
+        double alpha = adjustedDrift * dt;
+        int n = randoms.length;
 
         double delta = (Math.log(path[1] / path[0]) - adjustedDrift * dt)
                 / (spot * volatility * volatility * dt);
 
-        return new LogScore(delta, 0, 0, 0);
+        double vega = (alpha * n - n - Math.log(path[n] / path[0]));
+        for (double Z : randoms) vega += Z * Z;
+
+        vega *= (Math.sqrt(dt) / volatility);
+
+        return new LogScore(delta, 0, 0, vega);
     }
 
     @Override
