@@ -47,7 +47,7 @@ public class GreekData {
         this.delta *= constant;
         this.rho *= constant;
         this.theta *= constant;
-        this.vega *= vega;
+        this.vega *= constant;
         return this;
     }
 
