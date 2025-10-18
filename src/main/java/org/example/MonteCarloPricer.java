@@ -175,7 +175,7 @@ public class MonteCarloPricer implements DerivativePricer {
             List<Double> sums = new ArrayList<>();
             List<Double> sumSquares = new ArrayList<>();
 
-            Sobol sobol = new Sobol(steps, N);
+            Sobol sobol = new Sobol(steps * process.getRandomsPerStep(), N);
 
             if(process.drift != rate) {
                 throw new RuntimeException("Provided StochasticProcess does not have risk free rate specified by pricer");

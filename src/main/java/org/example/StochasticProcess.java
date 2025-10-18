@@ -32,13 +32,17 @@ public abstract class StochasticProcess {
     public abstract LogScore getLogScore();
     public abstract PathwiseGreeks getPathwiseGreeks(Derivative derivative);
 
-
     // stepDerivative(i) := dS_i/dS_i-1
     public abstract double stepDerivative(int i);
 
+    public int getRandomsPerStep() {
+        return 1;
+    }
 
     public void reset() {
         current = spot;
     }
+
+
 
 }

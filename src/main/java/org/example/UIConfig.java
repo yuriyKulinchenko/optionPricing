@@ -211,7 +211,7 @@ public class UIConfig extends Application {
 
         Supplier<StochasticProcess> supplier = switch (simulationType) {
             case "Geometric Brownian motion" -> () -> new GeometricBrownianMotion(spot, interest, vol);
-            case "Jump diffusion" -> () -> new JumpDiffusion(spot, interest, vol);
+            case "Heston (stochastic volatility)" -> () -> new Heston(spot, interest, vol);
             default -> null;
         };
 
@@ -371,7 +371,10 @@ public class UIConfig extends Application {
 
         GridPane form = createConfigForm();
 
-        ComboBox<String> optionSelector = createComboBox("Geometric Brownian motion", "Jump diffusion");
+        ComboBox<String> optionSelector = createComboBox(
+                "Geometric Brownian motion",
+                "Heston (stochastic volatility)"
+        );
 
         optionSelector.setOnAction(e -> {
             String selected = optionSelector.getValue();

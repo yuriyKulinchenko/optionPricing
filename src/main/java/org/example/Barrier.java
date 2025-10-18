@@ -34,6 +34,11 @@ public class Barrier extends Derivative {
     }
 
     @Override
+    DerivativePrice payoff(StochasticProcess process) {
+        return new DerivativePrice(rawPayoff(process),null, process.getLogScore());
+    }
+
+    @Override
     double payoffDerivative(StochasticProcess process, int i) {
         return 0;
     }
