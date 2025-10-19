@@ -81,19 +81,17 @@ public class GeometricBrownianMotion extends StochasticProcess {
         double sqrtDt = Math.sqrt(dt);
         double vol = volatility;
 
-        double sumZ = 0;
-        double sumSquaredZ = 0;
+        double sumZ = (Math.log(path[n] / path[0]) - n * adjustedDrift * dt)
+                / (vol * Math.sqrt(dt));
 
-        for(double Z: randoms) {
-            sumZ += Z;
-            sumSquaredZ += Z * Z;
-        }
+        double sumSquaredZ = 0;
+        for(double Z: randoms) sumSquaredZ += Z * Z;
+
 
         double delta = (Math.log(path[1] / path[0]) - adjustedDrift * dt)
                 / (spot * vol * vol * dt);
 
-        double rho = sumZ / (vol * vol);
-
+        double rho = sqrtDt * sumZ / vol;
         double vega = (sumSquaredZ - n) / vol - sqrtDt * sumZ;
 
         double theta = sumSquaredZ / (2 * dt) - n / (2 * dt)
