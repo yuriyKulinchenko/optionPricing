@@ -62,7 +62,7 @@ public class GeometricBrownianMotion extends StochasticProcess {
 
             product = adjointList[i] * path[i];
             productSum += product;
-            if(i != 0) productRandomSum += product * randoms[i-1];
+            if(i != 0) productRandomSum += product * randoms[i - 1];
         }
 
         double delta = adjointList[0];

@@ -36,7 +36,7 @@ public class Heston extends StochasticProcess {
         this.correlation = correlation;
         this.correlationPair = Math.sqrt(1 - correlation * correlation);
         this.meanVariance = volatility * volatility;
-        this.reversionSpeed = reversionSpeed * 100;
+        this.reversionSpeed = reversionSpeed;
     }
 
     public double getZ1(int i) {
@@ -84,6 +84,7 @@ public class Heston extends StochasticProcess {
 
             current *= Math.exp(adjustedDrift * dt + volCurrent * sqrtDt * X1);
             path[i + 1] = current;
+            varPath[i + 1] = varCurrent;
         }
     }
 
@@ -102,15 +103,30 @@ public class Heston extends StochasticProcess {
         pathAdjointList[N - 1] = derivative.payoffDerivative(this, N - 1);
         varAdjointList[N - 1] = pathAdjointList[N-1] * pathVarianceDerivative(N - 1);
 
+        double pathProduct = pathAdjointList[N - 1] * path[N - 1];
+        double pathProductSum = pathProduct;
+
+        double varSum = varAdjointList[N - 1];
+
         for(int i = N - 2; i >= 0; i--) {
             pathAdjointList[i] = pathAdjointList[i + 1] * stepDerivative(i + 1)
                     + derivative.payoffDerivative(this, i);
 
             varAdjointList[i] = varAdjointList[i + 1] * stepDerivativeVariance(i + 1)
                     + pathAdjointList[i] * pathVarianceDerivative(i);
+
+            pathProduct = pathAdjointList[i] * path[i];
+
+            pathProductSum += pathProduct;
+            varSum += varAdjointList[i];
         }
 
-        return new GreekData.PathwiseGreeks(0, 0, 0, 0);
+        double delta = pathAdjointList[0];
+        double rho = pathProductSum * dt;
+        double theta = 0;
+        double vega = 2 * Math.sqrt(meanVariance) * (dt * reversionSpeed * varSum  + varAdjointList[0]);
+
+        return new GreekData.PathwiseGreeks(delta, rho, theta, vega);
     }
 
     @Override
@@ -125,6 +141,7 @@ public class Heston extends StochasticProcess {
 
     public double pathVarianceDerivative(int i) {
         // returns dS_i/dV_i
+        if(i == 0) return 0;
         return path[i] * (0.5 * Math.sqrt(dt / varPath[i]) * X1List[i - 1] - 0.5 * dt);
     }
 
