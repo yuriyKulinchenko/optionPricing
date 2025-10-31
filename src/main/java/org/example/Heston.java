@@ -1,5 +1,7 @@
 package org.example;
 
+import org.apache.commons.math3.exception.OutOfRangeException;
+
 public class Heston extends StochasticProcess {
 
     public double volOfVol;
@@ -7,7 +9,10 @@ public class Heston extends StochasticProcess {
     public double correlationPair;
     public double reversionSpeed;
     public double meanVariance;
+
     public double[] varPath;
+    public double[] X1List;
+    public double[] X2List;
 
     public Heston(double spot, double drift, double volatility) {
         super(spot, drift, volatility);
@@ -46,6 +51,8 @@ public class Heston extends StochasticProcess {
     public void simulateSteps(int count, double dt, double[] randoms) {
         this.path = new double[count + 1];
         this.varPath = new double[count + 1];
+        this.X1List = new double[randoms.length / 2];
+        this.X2List = new double[randoms.length / 2];
         this.randoms = randoms;
         this.dt = dt;
 
@@ -58,20 +65,24 @@ public class Heston extends StochasticProcess {
         double sqrtDt = Math.sqrt(dt);
 
         for(int i = 0; i < count; i++) {
-            double Z1 = getZ1(i);
-            double Z2 = getZ2(i);
+            double X1 = getZ1(i);
+            double X2 = correlation * X1 + correlationPair * getZ2(i);
 
+            X1List[i] = X1;
+            X2List[i] = X2;
             // First, compute change to variance process
 
             varCurrent += reversionSpeed * (meanVariance - varCurrent) * dt
-                    + volOfVol * Math.sqrt(varCurrent * dt) * Z1;
+                    + volOfVol * Math.sqrt(varCurrent * dt) * X2;
 
             if(varCurrent < 0) varCurrent = 0;
 
             // Then, compute change to stochastic process
 
             double adjustedDrift = drift - 0.5 * varCurrent;
-            current *= Math.exp(adjustedDrift * dt + volatility * sqrtDt * Z2);
+            double volCurrent = Math.sqrt(varCurrent);
+
+            current *= Math.exp(adjustedDrift * dt + volCurrent * sqrtDt * X1);
             path[i + 1] = current;
         }
     }
@@ -83,12 +94,38 @@ public class Heston extends StochasticProcess {
 
     @Override
     public GreekData.PathwiseGreeks getPathwiseGreeks(Derivative derivative) {
+        int N = this.path.length;
+
+        double[] pathAdjointList = new double[N];
+        double[] varAdjointList = new double[N];
+
+        pathAdjointList[N - 1] = derivative.payoffDerivative(this, N - 1);
+        varAdjointList[N - 1] = pathAdjointList[N-1] * pathVarianceDerivative(N - 1);
+
+        for(int i = N - 2; i >= 0; i--) {
+            pathAdjointList[i] = pathAdjointList[i + 1] * stepDerivative(i + 1)
+                    + derivative.payoffDerivative(this, i);
+
+            varAdjointList[i] = varAdjointList[i + 1] * stepDerivativeVariance(i + 1)
+                    + pathAdjointList[i] * pathVarianceDerivative(i);
+        }
+
         return new GreekData.PathwiseGreeks(0, 0, 0, 0);
     }
 
     @Override
-    public double stepDerivative(int i) {
-        return 0;
+    public double stepDerivative(int i) throws OutOfRangeException {
+        return path[i] / path[i - 1];
+    }
+
+    public double stepDerivativeVariance(int i) throws OutOfRangeException {
+        return 1 - reversionSpeed * dt +
+                0.5 * (volOfVol * X2List[i - 1]) * Math.sqrt(dt/varPath[i - 1]);
+    }
+
+    public double pathVarianceDerivative(int i) {
+        // returns dS_i/dV_i
+        return path[i] * (0.5 * Math.sqrt(dt / varPath[i]) * X1List[i - 1] - 0.5 * dt);
     }
 
     @Override
